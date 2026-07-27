@@ -74,11 +74,11 @@ Los dos escriben archivos que **se comitean al repositorio**. En tiempo de ejecu
 
 ## Despliegue
 
-Cada push a la rama por defecto pasa por CI y, si todo está en verde, publica en **GitHub Pages**:
+Cada push a `main` pasa por CI y, si todo está en verde, publica en **GitHub Pages**:
 
 <https://arnaldopxm.github.io/LaCuenta-Scoreboard/>
 
-El workflow (`.github/workflows/desplegar.yml`) corre tests, auditoría de dependencias, build y **la verificación offline completa con Chromium** antes de publicar nada. La verificación se ejecuta con `--subruta`, porque Pages sirve el proyecto en `/LaCuenta-Scoreboard/` y no en la raíz del dominio: es exactamente lo que se despliega lo que se comprueba.
+El trabajo se hace en ramas y entra por pull request; `main` es lo que hay publicado. El workflow (`.github/workflows/desplegar.yml`) corre tests, auditoría de dependencias, build y **la verificación offline completa con Chromium** en cualquier rama y en cada PR, pero solo publica desde `main`. La rama de publicación está fijada por nombre y no a "la rama por defecto": lo que sale a internet no debería cambiar porque alguien toque un ajuste del repositorio. La verificación se ejecuta con `--subruta`, porque Pages sirve el proyecto en `/LaCuenta-Scoreboard/` y no en la raíz del dominio: es exactamente lo que se despliega lo que se comprueba.
 
 **Activación, una sola vez:** en *Ajustes → Pages → Build and deployment → Source*, elegir **GitHub Actions**. Crear el sitio de Pages es administración del repositorio, y el `GITHUB_TOKEN` de Actions no puede hacerlo por mucho `pages: write` que se le dé. A partir de ahí no hay que volver a tocar nada: cada push despliega solo.
 
