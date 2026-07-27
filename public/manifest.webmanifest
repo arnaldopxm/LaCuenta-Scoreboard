@@ -4,14 +4,16 @@
   "description": "Marcador para las partidas del juego de cartas La Cuenta. Lleva el dinero, las divisiones de la cuenta y las fichas de aumento de mano. Funciona sin conexión y no envía nada a ningún sitio.",
   "lang": "es",
   "dir": "ltr",
-  "id": "/la-cuenta-marcador",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",
   "orientation": "portrait",
   "theme_color": "#E8933A",
   "background_color": "#E8933A",
-  "categories": ["games", "utilities"],
+  "categories": [
+    "games",
+    "utilities"
+  ],
   "icons": [
     {
       "src": "iconos/icono-192.png",

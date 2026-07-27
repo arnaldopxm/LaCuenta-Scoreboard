@@ -14,11 +14,19 @@ import { createReadStream } from 'node:fs'
 import { stat } from 'node:fs/promises'
 import { createServer } from 'node:http'
 import { extname, join, normalize, resolve } from 'node:path'
+import { existsSync } from 'node:fs'
 import { chromium } from 'playwright'
 
 const DIST = resolve('dist')
 const PUERTO = 4178
 const CAPTURAS = process.argv.includes('--capturas')
+
+/**
+ * GitHub Pages sirve los proyectos en un subdirectorio, no en la raíz del
+ * dominio. Es justo donde revientan las PWA que dan por hecho que viven en `/`,
+ * así que se puede verificar el caso con `--subruta`.
+ */
+const SUBRUTA = process.argv.includes('--subruta') ? '/LaCuenta-Scoreboard/' : '/'
 
 const TIPOS = {
   '.html': 'text/html; charset=utf-8',
@@ -33,7 +41,14 @@ const TIPOS = {
 
 const servidor = createServer(async (peticion, respuesta) => {
   const ruta = decodeURIComponent((peticion.url ?? '/').split('?')[0])
-  const relativa = normalize(ruta === '/' ? '/index.html' : ruta).replace(/^(\.\.[/\\])+/, '')
+
+  // Fuera del prefijo de despliegue no hay nada, igual que en Pages.
+  if (!ruta.startsWith(SUBRUTA)) {
+    respuesta.writeHead(404).end('fuera de la subruta')
+    return
+  }
+  const dentro = ruta.slice(SUBRUTA.length - 1)
+  const relativa = normalize(dentro === '/' ? '/index.html' : dentro).replace(/^(\.\.[/\\])+/, '')
   const archivo = join(DIST, relativa)
 
   try {
@@ -50,13 +65,28 @@ const servidor = createServer(async (peticion, respuesta) => {
 })
 
 await new Promise((listo) => servidor.listen(PUERTO, listo))
-const BASE = `http://localhost:${PUERTO}/`
+const BASE = `http://localhost:${PUERTO}${SUBRUTA}`
+console.log(`\nSirviendo dist/ en ${BASE}`)
 
-// El Chromium del entorno no siempre coincide con la build que espera esta
-// versión de Playwright, así que se apunta al binario preinstalado.
-const navegador = await chromium.launch({
-  executablePath: process.env.CHROMIUM_BIN ?? '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
-})
+/**
+ * En CI vale el Chromium que instala Playwright. En entornos donde ya hay uno
+ * preinstalado, la build puede no coincidir con la que espera esta versión de
+ * Playwright, así que se cae al binario que haya.
+ */
+async function abrirNavegador() {
+  if (process.env.CHROMIUM_BIN) {
+    return chromium.launch({ executablePath: process.env.CHROMIUM_BIN })
+  }
+  try {
+    return await chromium.launch()
+  } catch (error) {
+    const preinstalado = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome'
+    if (!existsSync(preinstalado)) throw error
+    return chromium.launch({ executablePath: preinstalado })
+  }
+}
+
+const navegador = await abrirNavegador()
 const contexto = await navegador.newContext({
   viewport: { width: 390, height: 844 },
   deviceScaleFactor: 2,

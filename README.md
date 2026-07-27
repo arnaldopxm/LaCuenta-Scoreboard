@@ -72,6 +72,24 @@ Los dos escriben archivos que **se comitean al repositorio**. En tiempo de ejecu
 
 ---
 
+## Despliegue
+
+Cada push a la rama por defecto pasa por CI y, si todo está en verde, publica en **GitHub Pages**:
+
+<https://arnaldopxm.github.io/LaCuenta-Scoreboard/>
+
+El workflow (`.github/workflows/desplegar.yml`) corre tests, auditoría de dependencias, build y **la verificación offline completa con Chromium** antes de publicar nada. La verificación se ejecuta con `--subruta`, porque Pages sirve el proyecto en `/LaCuenta-Scoreboard/` y no en la raíz del dominio: es exactamente lo que se despliega lo que se comprueba.
+
+La primera ejecución activa Pages sola, vía `actions/configure-pages` con `enablement`. No hay que tocar los ajustes del repositorio a mano.
+
+Un aviso: el paso `npm audit --audit-level=high` **bloquea el despliegue** si aparece un CVE alto, aunque sea en una dependencia de desarrollo. Es deliberado —la promesa de privacidad de esta app depende de no arrastrar basura— pero significa que un aviso de seguridad ajeno puede parar una publicación. Si algún día estorba, es un paso de cuatro líneas.
+
+### Desplegar en otro sitio
+
+El build no da por hecho ninguna ruta: `base: './'` y todas las URLs del manifiesto, el service worker y los assets son relativas. `dist/` funciona tal cual en la raíz de un dominio, en un subdirectorio o en Netlify, Cloudflare Pages o cualquier hosting estático. El único requisito real es **HTTPS**, sin el cual no hay service worker y por tanto no hay offline.
+
+---
+
 ## Stack
 
 | Pieza | Versión | Por qué |

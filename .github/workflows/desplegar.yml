@@ -1,0 +1,79 @@
+name: Comprobar y desplegar
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+# Lo mínimo: leer el repo y publicar en Pages. Nada de escribir en el código.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Un despliegue a la vez, sin cancelar el que esté a medias.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  comprobar:
+    name: Tests y verificación offline
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Auditar dependencias
+        # El marcador no manda nada a ningún sitio; una dependencia con un CVE
+        # conocido es la vía más fácil de que eso deje de ser verdad.
+        run: npm audit --audit-level=high
+
+      - name: Tests del dominio y la persistencia
+        run: npm test
+
+      # `npm run build` ya pasa el typecheck de la app y del service worker.
+      - name: Compilar
+        run: npm run build
+
+      - name: Instalar Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Verificación offline
+        # Con --subruta, porque Pages sirve el proyecto en /LaCuenta-Scoreboard/
+        # y no en la raíz del dominio: es el caso que de verdad se despliega.
+        run: node scripts/verificar-offline.mjs --subruta
+
+      - name: Preparar artefacto de Pages
+        if: github.ref_name == github.event.repository.default_branch
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist
+
+  desplegar:
+    name: Publicar en GitHub Pages
+    needs: comprobar
+    # Solo desde la rama por defecto, se llame como se llame.
+    if: github.ref_name == github.event.repository.default_branch
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.despliegue.outputs.page_url }}
+    steps:
+      - name: Configurar Pages
+        # `enablement` activa Pages y pone Actions como origen la primera vez,
+        # así no hay que tocar nada a mano en los ajustes del repositorio.
+        uses: actions/configure-pages@v6
+        with:
+          enablement: true
+
+      - name: Desplegar
+        id: despliegue
+        uses: actions/deploy-pages@v5
