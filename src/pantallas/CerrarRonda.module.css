@@ -1,0 +1,45 @@
+.bloque {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-m);
+}
+
+.subtitulo {
+  font-family: var(--fuente-titulo);
+  font-size: 1.1rem;
+}
+
+.subtituloPizarra {
+  font-family: var(--fuente-titulo);
+  font-size: 1rem;
+  color: var(--mostaza);
+  margin-bottom: var(--esp-s);
+}
+
+.pizarraContenido {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-l);
+}
+
+.pistaPizarra {
+  margin-bottom: var(--esp-s);
+  font-size: 0.85rem;
+  color: #b8a892;
+}
+
+.casillas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-s);
+}
+
+.aviso {
+  padding: var(--esp-s) var(--esp-m);
+  background: var(--superficie);
+  border: 2px dashed var(--borde-fuerte);
+  border-radius: var(--radio-m);
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--tinta-media);
+}

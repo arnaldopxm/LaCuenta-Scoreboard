@@ -1,0 +1,233 @@
+.campo {
+  display: block;
+}
+
+.etiqueta {
+  display: block;
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  margin-bottom: var(--esp-s);
+}
+
+.cajaNumero {
+  display: flex;
+  align-items: stretch;
+  border: 2px solid var(--borde-fuerte);
+  border-radius: var(--radio-m);
+  background: var(--superficie);
+  overflow: hidden;
+  box-shadow: var(--sombra-carta);
+}
+
+.entradaNumero {
+  flex: 1;
+  min-width: 0;
+  min-height: 60px;
+  padding: 0 var(--esp-m);
+  border: none;
+  background: transparent;
+  font-size: 2rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  text-align: right;
+}
+
+.entradaNumero:focus {
+  outline: none;
+}
+
+.entradaNumero::-webkit-outer-spin-button,
+.entradaNumero::-webkit-inner-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+.euro {
+  display: flex;
+  align-items: center;
+  padding: 0 var(--esp-m);
+  background: var(--superficie-hundida);
+  border-left: 2px solid var(--borde-fuerte);
+  font-family: var(--fuente-titulo);
+  font-size: 1.3rem;
+}
+
+/* Sobre pizarra: la propina es una carta post-cuenta. */
+.enPizarra .cajaNumero {
+  background: var(--pizarra-elevada);
+  border-color: var(--pizarra-borde);
+}
+
+.enPizarra .entradaNumero {
+  color: var(--pizarra-tinta);
+}
+
+.enPizarra .euro {
+  background: #100e0c;
+  border-left-color: var(--pizarra-borde);
+  color: var(--mostaza);
+}
+
+.enPizarra .etiqueta {
+  color: var(--pizarra-tinta);
+}
+
+.ayuda {
+  margin-top: var(--esp-xs);
+  font-size: 0.85rem;
+  color: var(--tinta-media);
+}
+
+.enPizarra .ayuda {
+  color: #b8a892;
+}
+
+/* --- Casilla --- */
+
+.casilla {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-m);
+  min-height: var(--toque-min);
+  padding: var(--esp-s) var(--esp-m);
+  border: 2px solid var(--borde-fuerte);
+  border-radius: var(--radio-m);
+  background: var(--superficie);
+  width: 100%;
+  text-align: left;
+  font-weight: 600;
+}
+
+.casilla:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.casillaPizarra {
+  background: var(--pizarra-elevada);
+  border-color: var(--pizarra-borde);
+  color: var(--pizarra-tinta);
+}
+
+.marca {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  border: 2px solid var(--borde-fuerte);
+  border-radius: var(--radio-s);
+  background: var(--superficie-hundida);
+  display: grid;
+  place-items: center;
+}
+
+.casillaPizarra .marca {
+  border-color: var(--pizarra-borde);
+  background: #100e0c;
+}
+
+.marcaActiva {
+  background: var(--mostaza);
+}
+
+.casillaPizarra .marcaActiva {
+  background: var(--mostaza);
+}
+
+.textoCasilla {
+  flex: 1;
+  min-width: 0;
+}
+
+.subtexto {
+  display: block;
+  font-weight: 400;
+  font-size: 0.85rem;
+  color: var(--tinta-media);
+}
+
+.casillaPizarra .subtexto {
+  color: #b8a892;
+}
+
+/* --- Selector de jugador --- */
+
+.rejilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--esp-s);
+}
+
+.ficha {
+  min-height: var(--toque-min);
+  padding: var(--esp-s) var(--esp-m);
+  border: 2px solid var(--borde-fuerte);
+  border-radius: var(--radio-m);
+  background: var(--superficie);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fichaPizarra {
+  background: var(--pizarra-elevada);
+  border-color: var(--pizarra-borde);
+  color: var(--pizarra-tinta);
+}
+
+.fichaElegida {
+  background: var(--mostaza);
+  color: #1e1a17;
+  box-shadow: var(--sombra-carta);
+}
+
+.fichaPizarra.fichaElegida {
+  color: #1e1a17;
+}
+
+.ficha:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* --- Grupo de opciones (modo de reparto) --- */
+
+.opciones {
+  display: grid;
+  gap: var(--esp-s);
+}
+
+.opcion {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-height: var(--toque-min);
+  padding: var(--esp-m);
+  border: 2px solid var(--pizarra-borde);
+  border-radius: var(--radio-m);
+  background: var(--pizarra-elevada);
+  color: var(--pizarra-tinta);
+  text-align: left;
+  font-weight: 600;
+  width: 100%;
+}
+
+.opcionElegida {
+  background: var(--mostaza);
+  color: #1e1a17;
+  border-color: #0d0b0a;
+  box-shadow: var(--sombra-carta);
+}
+
+.opcionDescripcion {
+  font-weight: 400;
+  font-size: 0.85rem;
+  color: #b8a892;
+}
+
+.opcionElegida .opcionDescripcion {
+  color: #4a3d28;
+}

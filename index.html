@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- viewport-fit=cover para que las safe areas del iPhone sean nuestras. -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#E8933A" />
+    <meta name="color-scheme" content="light dark" />
+    <meta
+      name="description"
+      content="Marcador para las partidas del juego de cartas La Cuenta. Funciona sin conexión y no envía nada a ningún sitio."
+    />
+
+    <!-- Nada sale de este dispositivo, y el navegador lo hace cumplir. -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src __SCRIPT_SRC__; img-src 'self' data:; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'"
+    />
+    <meta name="referrer" content="no-referrer" />
+
+    <!-- iOS Safari: pantalla completa, barra a juego y icono de escritorio. -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="La Cuenta" />
+    <link rel="apple-touch-icon" href="iconos/apple-touch-icon.png" />
+
+    <link rel="icon" href="iconos/favicon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="manifest.webmanifest" />
+
+    <title>La Cuenta · Marcador</title>
+
+    <!--
+      Fondo pintado antes de que cargue nada: al abrir la app instalada de noche
+      en una terraza, un fogonazo blanco no es aceptable.
+    -->
+    <style>
+      html {
+        background: #e8933a;
+      }
+      @media (prefers-color-scheme: dark) {
+        html:not([data-tema='claro']) {
+          background: #14110f;
+        }
+      }
+      html[data-tema='oscuro'] {
+        background: #14110f;
+      }
+      html[data-tema='claro'] {
+        background: #e8933a;
+      }
+    </style>
+    <script>
+      // Se aplica el tema guardado antes del primer pintado, no después.
+      try {
+        var t = localStorage.getItem('la-cuenta:tema')
+        if (t === 'claro' || t === 'oscuro') document.documentElement.setAttribute('data-tema', t)
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div id="raiz"></div>
+    <noscript>
+      El marcador de La Cuenta necesita JavaScript. Todo se calcula en tu móvil; no hay servidor.
+    </noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

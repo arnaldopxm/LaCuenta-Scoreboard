@@ -1,0 +1,184 @@
+.intro {
+  font-size: 0.9rem;
+  color: var(--tinta);
+  opacity: 0.85;
+}
+
+.lista {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-m);
+}
+
+.tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-m);
+  padding: var(--esp-m);
+  background: var(--superficie);
+  border: 2px solid var(--borde-fuerte);
+  border-radius: var(--radio-m);
+  box-shadow: var(--sombra-carta);
+}
+
+.cabecera {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-m);
+}
+
+.indice {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 2px solid var(--borde-fuerte);
+  border-radius: 50%;
+  background: var(--cartucho);
+  color: var(--tinta-sobre-color);
+  font-family: var(--fuente-titulo);
+  font-size: 0.95rem;
+}
+
+.titular {
+  flex: 1;
+  min-width: 0;
+}
+
+.pagador {
+  display: block;
+  font-family: var(--fuente-titulo);
+  font-size: 1.05rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.modo {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--tinta-media);
+}
+
+.importe {
+  flex: 0 0 auto;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.detalles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--esp-xs);
+}
+
+.etiqueta,
+.pago {
+  padding: 2px var(--esp-s);
+  border-radius: var(--radio-s);
+  font-size: 0.8rem;
+  border: 1px solid var(--borde);
+}
+
+.etiqueta {
+  background: var(--mostaza);
+  color: #1e1a17;
+  font-weight: 600;
+}
+
+.pago {
+  background: var(--superficie-hundida);
+  color: var(--tinta-media);
+}
+
+.estadoTras {
+  display: flex;
+  flex-wrap: wrap;
+  /* Hueco generoso: si no, "Jugador 1 774 €" se lee como un solo número. */
+  gap: var(--esp-xs) var(--esp-m);
+  padding-top: var(--esp-s);
+  border-top: 1px dashed var(--borde);
+  font-size: 0.8rem;
+  color: var(--tinta-tenue);
+  font-variant-numeric: tabular-nums;
+}
+
+.acciones,
+.botonesConfirmacion {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--esp-s);
+}
+
+.confirmacion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-s);
+  padding: var(--esp-m);
+  background: var(--superficie-hundida);
+  border: 2px dashed var(--peligro);
+  border-radius: var(--radio-m);
+  font-weight: 600;
+  text-align: center;
+}
+
+/* El saldo, en tinta plena para que no se confunda con el nombre. */
+.saldo {
+  color: var(--tinta-media);
+  font-weight: 600;
+}
+
+/* Aviso de que hay rondas por detrás del fin de partida. */
+.avisoHuerfanas {
+  padding: var(--esp-m);
+  background: var(--pizarra);
+  color: var(--pizarra-tinta);
+  border: 2px solid var(--borde-fuerte);
+  border-radius: var(--radio-m);
+  box-shadow: var(--sombra-carta);
+  font-size: 0.9rem;
+}
+
+/* La ronda en la que alguien se quedó sin ahorros. */
+.tarjetaFinal {
+  border-color: var(--peligro);
+}
+
+/*
+ * Rondas guardadas que no se jugaron: la partida ya había terminado antes de
+ * llegar a ellas. Se atenúan pero se dejan tocables, porque corregir la ronda
+ * culpable es justo la forma de recuperarlas.
+ */
+.tarjetaIgnorada {
+  background: var(--superficie-hundida);
+  border-style: dashed;
+  box-shadow: none;
+}
+
+.tarjetaIgnorada .pagador,
+.tarjetaIgnorada .importe,
+.tarjetaIgnorada .modo,
+.tarjetaIgnorada .detalles {
+  opacity: 0.55;
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+}
+
+.tarjetaIgnorada .indice {
+  background: var(--tinta-tenue);
+}
+
+.sello {
+  align-self: flex-start;
+  padding: 2px var(--esp-s);
+  border: 1px dashed var(--borde-fuerte);
+  border-radius: var(--radio-s);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--peligro);
+}

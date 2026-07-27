@@ -5,7 +5,7 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "jsx": "react-jsx",
-    "types": ["vite/client", "vite-plugin-pwa/client"],
+    "types": ["vite/client", "node"],
 
     "strict": true,
     "noUncheckedIndexedAccess": true,
@@ -23,5 +23,6 @@
     "allowImportingTsExtensions": true,
     "noEmit": true
   },
-  "include": ["src", "vite.config.ts"]
+  "include": ["src", "vite.config.ts", "plugin-sw.ts", "plugin-csp.ts"],
+  "exclude": ["src/sw"]
 }

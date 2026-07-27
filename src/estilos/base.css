@@ -1,0 +1,93 @@
+@import './tokens.css';
+@import '../fuentes/fuentes.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  /* Sin rebote de scroll: esto es un marcador, no una web. */
+  overscroll-behavior-y: none;
+}
+
+body {
+  min-height: 100dvh;
+  background-color: var(--lienzo);
+  color: var(--tinta);
+  font-family: var(--fuente-texto);
+  font-size: 17px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  /* El texto no se selecciona al pasar el móvil de mano en mano. */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Textura de papel sobre el lienzo, sin interceptar toques. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: var(--textura-papel);
+  opacity: var(--textura-opacidad);
+  pointer-events: none;
+  z-index: 0;
+}
+
+#raiz {
+  position: relative;
+  z-index: 1;
+  min-height: 100dvh;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--fuente-titulo);
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+input {
+  font: inherit;
+  color: inherit;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* Cifras siempre con numerales tabulares: no bailan al cambiar. */
+.cifra {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+:focus-visible {
+  outline: 3px solid var(--mostaza);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

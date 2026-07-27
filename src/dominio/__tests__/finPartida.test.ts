@@ -19,10 +19,12 @@ describe('detección de fin de partida', () => {
 
 describe('clasificación', () => {
   it('ordena de más a menos ahorros sin tocar el orden de la mesa', () => {
+    // La ronda que arruina a j1 va la última: si fuese la primera, las otras
+    // dos quedarían por detrás del fin de partida y no contarían.
     const partida = partidaDe(4, [
-      ronda({ pagadorId: 'j1', totalCartas: 1000 }),
       ronda({ pagadorId: 'j2', totalCartas: 300 }),
       ronda({ pagadorId: 'j3', totalCartas: 100 }),
+      ronda({ pagadorId: 'j1', totalCartas: 1000 }),
     ])
     const { puestos } = clasificar(partida)
     expect(puestos.map((p) => p.jugadorId)).toEqual(['j4', 'j3', 'j2', 'j1'])
@@ -32,9 +34,11 @@ describe('clasificación', () => {
   })
 
   it('declara ganador automático cuando hay un único líder', () => {
+    // j2 se gasta 100 € antes de que j1 se arruine, así que j3 queda solo
+    // en cabeza con sus 900 € intactos.
     const partida = partidaDe(3, [
-      ronda({ pagadorId: 'j1', totalCartas: 900 }),
       ronda({ pagadorId: 'j2', totalCartas: 100 }),
+      ronda({ pagadorId: 'j1', totalCartas: 900 }),
     ])
     const resultado = clasificar(partida)
     expect(resultado.ganadorId).toBe('j3')

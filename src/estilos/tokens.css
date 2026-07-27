@@ -1,0 +1,180 @@
+/*
+ * Paleta e identidad de La Cuenta.
+ *
+ * Derivada del arte de la caja y del reglamento: naranja cálido, papel crema,
+ * tinta casi negra y los colores de las tapas como código semántico.
+ *
+ * El modo oscuro NO oscurece la paleta cálida. Se construye sobre la pizarra
+ * negra que el propio juego usa para las cartas que solo se juegan después de
+ * pedir la cuenta. El ticket es la excepción: sigue siendo papel crema porque
+ * es el objeto físico que hay encima de la mesa.
+ */
+
+:root {
+  /* --- Superficies --- */
+  --lienzo: #e8933a;
+  --lienzo-profundo: #d9752a;
+  --superficie: #f7ebd5;
+  --superficie-hundida: #efdfc2;
+  --borde: #c9a878;
+  --borde-fuerte: #1e1a17;
+
+  /* --- Tinta --- */
+  --tinta: #1e1a17;
+  --tinta-media: #5b5049;
+  --tinta-tenue: #8b7d72;
+  --tinta-sobre-color: #f7ebd5;
+
+  /* --- Acentos --- */
+  --cartucho: #d9752a;
+  --mostaza: #f2c14e;
+  --mostaza-honda: #c99a2e;
+
+  /* --- Pizarra: las cartas post-cuenta del juego --- */
+  --pizarra: #14110f;
+  --pizarra-elevada: #241f1b;
+  --pizarra-tinta: #f7ebd5;
+  --pizarra-borde: #3d342d;
+
+  /* --- Tapas: código semántico, no decoración --- */
+  --tapa-vegetal: #7a8b4a;
+  --tapa-carne: #e0a93b;
+  --tapa-pescado: #6e5a8c;
+  --vino: #3e6b7a;
+  --tarta: #e8a7b8;
+
+  /* --- Estados --- */
+  --peligro: #b03b2a;
+  --exito: #7a8b4a;
+
+  /* --- El ticket es papel siempre, en claro y en oscuro --- */
+  --ticket-papel: #f7ebd5;
+  --ticket-tinta: #1e1a17;
+  --ticket-tenue: #8b7d72;
+
+  /* --- Tipografía --- */
+  --fuente-titulo: 'Alfa Slab One', Rockwell, Georgia, serif;
+  --fuente-texto: 'Source Sans 3', system-ui, -apple-system, sans-serif;
+  --fuente-ticket: 'Courier Prime', ui-monospace, 'Courier New', monospace;
+
+  /* --- Medidas --- */
+  --toque-min: 48px;
+  --radio-s: 6px;
+  --radio-m: 12px;
+  --radio-l: 20px;
+  --radio-cartucho: 999px;
+
+  --esp-xs: 4px;
+  --esp-s: 8px;
+  --esp-m: 12px;
+  --esp-l: 20px;
+  --esp-xl: 32px;
+
+  --sombra-carta: 0 2px 0 rgb(30 26 23 / 0.25);
+  --sombra-elevada: 0 4px 0 rgb(30 26 23 / 0.3);
+
+  /*
+   * Textura de papel. SVG inline en data URI: ni una petición sale del
+   * dispositivo, ni siquiera para el ruido de fondo.
+   */
+  --textura-papel: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='r'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23r)'/%3E%3C/svg%3E");
+  --textura-opacidad: 0.06;
+
+  color-scheme: light;
+}
+
+/*
+ * Modo oscuro sobre pizarra. Se aplica por preferencia del sistema y se puede
+ * forzar con el interruptor, que estampa data-tema en el <html>.
+ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema='claro']) {
+    --lienzo: #14110f;
+    --lienzo-profundo: #0d0b0a;
+    --superficie: #241f1b;
+    --superficie-hundida: #1b1714;
+    --borde: #3d342d;
+    --borde-fuerte: #574a40;
+
+    --tinta: #f7ebd5;
+    --tinta-media: #c2b4a1;
+    --tinta-tenue: #8e8175;
+    --tinta-sobre-color: #14110f;
+
+    --cartucho: #e8933a;
+    --mostaza: #f2c14e;
+    --mostaza-honda: #f2c14e;
+
+    /* Tapas con la luminosidad justo subida para contrastar sobre pizarra. */
+    /*
+     * Sobre pizarra, el bloque post-cuenta tiene que seguir leyéndose como
+     * un objeto aparte: se hunde por debajo del lienzo mientras las tarjetas
+     * de papel quedan por encima. Tarjeta clara > lienzo > pizarra.
+     */
+    --pizarra: #0b0908;
+    --pizarra-elevada: #1c1815;
+    --pizarra-borde: #453b33;
+
+    --tapa-vegetal: #9db264;
+    --tapa-carne: #efc05a;
+    --tapa-pescado: #a392c4;
+    --vino: #6fa3b5;
+    --tarta: #f0b9c7;
+
+    --peligro: #e07a63;
+    --exito: #9db264;
+
+    --sombra-carta: 0 2px 0 rgb(0 0 0 / 0.5);
+    --sombra-elevada: 0 4px 0 rgb(0 0 0 / 0.55);
+    --textura-opacidad: 0.08;
+
+    color-scheme: dark;
+  }
+}
+
+/* Forzado manual: gana siempre sobre la preferencia del sistema. */
+:root[data-tema='oscuro'] {
+  --lienzo: #14110f;
+  --lienzo-profundo: #0d0b0a;
+  --superficie: #241f1b;
+  --superficie-hundida: #1b1714;
+  --borde: #3d342d;
+  --borde-fuerte: #574a40;
+
+  --tinta: #f7ebd5;
+  --tinta-media: #c2b4a1;
+  --tinta-tenue: #8e8175;
+  --tinta-sobre-color: #14110f;
+
+  --cartucho: #e8933a;
+  --mostaza: #f2c14e;
+  --mostaza-honda: #f2c14e;
+
+  /*
+   * Sobre pizarra, el bloque post-cuenta tiene que seguir leyéndose como
+   * un objeto aparte: se hunde por debajo del lienzo mientras las tarjetas
+   * de papel quedan por encima. Tarjeta clara > lienzo > pizarra.
+   */
+  --pizarra: #0b0908;
+  --pizarra-elevada: #1c1815;
+  --pizarra-borde: #453b33;
+
+  --tapa-vegetal: #9db264;
+  --tapa-carne: #efc05a;
+  --tapa-pescado: #a392c4;
+  --vino: #6fa3b5;
+  --tarta: #f0b9c7;
+
+  --peligro: #e07a63;
+  --exito: #9db264;
+
+  --sombra-carta: 0 2px 0 rgb(0 0 0 / 0.5);
+  --sombra-elevada: 0 4px 0 rgb(0 0 0 / 0.55);
+  --textura-opacidad: 0.08;
+
+  color-scheme: dark;
+}
+
+:root[data-tema='claro'] {
+  color-scheme: light;
+}

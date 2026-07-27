@@ -1,0 +1,29 @@
+/*
+ * Los encabezados del reglamento: cartucho redondeado naranja con el texto en
+ * crema y mayúsculas (COMPONENTES, PEDIR LA CUENTA).
+ */
+.cartucho {
+  display: inline-block;
+  padding: var(--esp-s) var(--esp-l);
+  background: var(--cartucho);
+  color: var(--tinta-sobre-color);
+  border: 2px solid var(--borde-fuerte);
+  border-radius: var(--radio-cartucho);
+  font-family: var(--fuente-titulo);
+  font-size: 1.05rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  box-shadow: var(--sombra-carta);
+}
+
+.grande {
+  font-size: 1.4rem;
+  padding: var(--esp-m) var(--esp-xl);
+}
+
+/* Variante para cuando el cartucho vive dentro de un bloque de pizarra. */
+.sobrePizarra {
+  background: var(--mostaza);
+  color: #1e1a17;
+  border-color: #0d0b0a;
+}

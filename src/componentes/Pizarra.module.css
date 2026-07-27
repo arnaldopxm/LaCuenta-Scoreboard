@@ -1,0 +1,39 @@
+/*
+ * Bloque pizarra.
+ *
+ * En el juego, las cartas que solo se juegan DESPUÉS de pedir la cuenta
+ * (A medias, A pachas, Propina) son negras sobre pizarra. Aquí se usa el mismo
+ * código: todo lo que modifica una cuenta ya pedida vive sobre este fondo.
+ */
+.pizarra {
+  background: var(--pizarra);
+  color: var(--pizarra-tinta);
+  border: 2px solid var(--borde-fuerte);
+  border-radius: var(--radio-m);
+  padding: var(--esp-l) var(--esp-m);
+  box-shadow: var(--sombra-carta);
+}
+
+/* Marca de tiza en la esquina, como los precios escritos a mano en el bar. */
+.pizarra::after {
+  content: '';
+  display: block;
+  height: 1px;
+  margin-top: var(--esp-l);
+  background: repeating-linear-gradient(
+    90deg,
+    var(--pizarra-borde) 0 18px,
+    transparent 18px 26px
+  );
+  opacity: 0.8;
+}
+
+.cabecera {
+  margin-bottom: var(--esp-m);
+}
+
+.pie {
+  margin-top: var(--esp-m);
+  font-size: 0.85rem;
+  color: #b8a892;
+}

@@ -1,5 +1,5 @@
-import { estadosDePartida } from './derivarEstado.ts'
-import type { EstadoJugador, Partida } from './tipos.ts'
+import { derivacionDePartida } from './derivarEstado.ts'
+import type { EstadoJugador, Partida, Ronda } from './tipos.ts'
 
 export interface Clasificacion {
   /** Alguien se quedó a 0: la partida ha terminado. */
@@ -18,6 +18,12 @@ export interface Clasificacion {
   requiereDesempate: boolean
   /** Ganador automático, solo cuando no hay empate. */
   ganadorId: string | null
+  /**
+   * Rondas guardadas después de la que cerró la partida. No cuentan para nada,
+   * pero hay que enseñarlas para que se entienda por qué el marcador no cuadra
+   * con el historial.
+   */
+  rondasIgnoradas: Ronda[]
 }
 
 /**
@@ -27,7 +33,7 @@ export interface Clasificacion {
  * gana quien más ahorros conserve.
  */
 export function clasificar(partida: Partida): Clasificacion {
-  const estados = estadosDePartida(partida)
+  const { estados, rondasIgnoradas } = derivacionDePartida(partida)
   const terminada = estados.some((e) => e.sinAhorros)
 
   const puestos = [...estados].sort((a, b) => b.ahorros - a.ahorros)
@@ -42,6 +48,7 @@ export function clasificar(partida: Partida): Clasificacion {
     empatadosIds,
     requiereDesempate,
     ganadorId: !requiereDesempate && empatadosIds.length === 1 ? empatadosIds[0]! : null,
+    rondasIgnoradas,
   }
 }
 
