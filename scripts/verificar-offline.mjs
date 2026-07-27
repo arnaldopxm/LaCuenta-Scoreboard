@@ -130,6 +130,42 @@ const marcador = await texto()
 comprobar('Ahorros aplicados al marcador', marcador.includes('1064 €'), '1100 − 36')
 comprobar('Aumento de mano concedido solo al pagador', marcador.includes('6 cartas en mano'))
 
+console.log('\n· Botón físico de atrás\n')
+
+// La pila es [inicio, marcador]: crear la partida sustituyó al formulario en
+// vez de apilarse encima.
+await pagina.goBack()
+await pagina.waitForSelector('text=Continuar partida', { timeout: 5000 })
+comprobar('Atrás desde el marcador lleva al inicio, no al formulario de partida nueva', true)
+
+await pagina.getByRole('button', { name: 'Continuar partida' }).click()
+await pagina.waitForSelector('text=Ronda 2')
+
+// Tres niveles: marcador -> historial -> corregir ronda.
+await pagina.getByRole('button', { name: 'Historial', exact: true }).click()
+await pagina.waitForSelector('text=Corregir')
+await pagina.getByRole('button', { name: 'Corregir' }).first().click()
+await pagina.waitForSelector('text=Corregir ronda 1')
+
+await pagina.goBack()
+await pagina.waitForSelector('text=Corregir', { timeout: 5000 })
+comprobar('Atrás desde corregir vuelve al historial de rondas', true)
+
+await pagina.goBack()
+await pagina.waitForSelector('text=Cerrar ronda', { timeout: 5000 })
+comprobar('Atrás desde el historial vuelve al marcador', true)
+
+// Guardar una corrección tiene que dejar en el historial, no en el marcador.
+await pagina.getByRole('button', { name: 'Historial', exact: true }).click()
+await pagina.getByRole('button', { name: 'Corregir' }).first().click()
+await pagina.getByLabel('Total de las cartas').fill('141')
+await pagina.getByRole('button', { name: 'Guardar cambios' }).click()
+await pagina.waitForSelector('text=Corregir', { timeout: 5000 })
+comprobar('Guardar una corrección devuelve al historial', true)
+
+await pagina.goBack()
+await pagina.waitForSelector('text=Cerrar ronda', { timeout: 5000 })
+
 console.log('\n· Corte de red y recarga\n')
 await contexto.setOffline(true)
 await pagina.reload({ waitUntil: 'load' })
@@ -139,10 +175,10 @@ comprobar('La app arranca en modo avión', true)
 await pagina.getByRole('button', { name: 'Continuar partida' }).click()
 await pagina.waitForSelector('text=Ronda 2')
 const trasCorte = await texto()
-comprobar(
-  'La partida sobrevive intacta sin red',
-  trasCorte.includes('1064 €'),
-)
+// 1063 € y no 1064: justo antes se corrigió la ronda a 141 € de cartas, que
+// con los 4 € de propina son 145 € entre 4 marcados, o sea 37 € por cabeza.
+// Que sobreviva este número y no el de antes prueba que persistió la edición.
+comprobar('La partida y la corrección sobreviven sin red', trasCorte.includes('1063 €'))
 if (CAPTURAS) await pagina.screenshot({ path: 'capturas/05-offline.png', fullPage: true })
 
 console.log('\n· Instalación desde cero en modo avión\n')

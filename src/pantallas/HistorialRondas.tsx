@@ -5,7 +5,8 @@ import { Pantalla } from '../componentes/Pantalla.tsx'
 import {
   calcularCuenta,
   calcularPagos,
-  estadosTrasCadaRonda,
+  derivacionDePartida,
+  instantaneasDeRondas,
   type Partida,
   type Reparto,
   type Ronda,
@@ -21,7 +22,8 @@ interface Props {
 
 export function HistorialRondas({ partida, onAtras, onEditar, onBorrar }: Props) {
   const [confirmando, setConfirmando] = useState<string | null>(null)
-  const instantaneas = estadosTrasCadaRonda(partida)
+  const instantaneas = instantaneasDeRondas(partida)
+  const { indiceRondaFinal, rondasIgnoradas } = derivacionDePartida(partida)
   const nombreDe = (id: string) => partida.jugadores.find((j) => j.id === id)?.nombre ?? '¿?'
 
   if (partida.rondas.length === 0) {
@@ -38,15 +40,38 @@ export function HistorialRondas({ partida, onAtras, onEditar, onBorrar }: Props)
         Cualquier ronda se puede corregir o borrar. Las posteriores se recalculan solas.
       </p>
 
+      {rondasIgnoradas.length > 0 ? (
+        <p className={estilos.avisoHuerfanas}>
+          La partida se acabó en la ronda {(indiceRondaFinal ?? 0) + 1}, así que{' '}
+          {rondasIgnoradas.length === 1
+            ? 'la ronda siguiente ya no cuenta'
+            : `las ${rondasIgnoradas.length} rondas siguientes ya no cuentan`}
+          . Siguen guardadas: corrige o borra la ronda {(indiceRondaFinal ?? 0) + 1} para que
+          vuelvan al juego.
+        </p>
+      ) : null}
+
       <ul className={estilos.lista}>
         {partida.rondas.map((ronda, indice) => {
           const cuenta = calcularCuenta(ronda.totalCartas, ronda.propina)
           const pagos = calcularPagos(ronda)
-          const tras = instantaneas[indice] ?? []
+          const instantanea = instantaneas[indice]
+          const tras = instantanea?.estados ?? []
+          const ignorada = instantanea?.ignorada ?? false
+          const cierraLaPartida = indice === indiceRondaFinal
           const borrando = confirmando === ronda.id
 
           return (
-            <li key={ronda.id} className={estilos.tarjeta}>
+            <li
+              key={ronda.id}
+              className={[
+                estilos.tarjeta,
+                ignorada ? estilos.tarjetaIgnorada : '',
+                cierraLaPartida ? estilos.tarjetaFinal : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+            >
               <div className={estilos.cabecera}>
                 <span className={estilos.indice}>{indice + 1}</span>
                 <div className={estilos.titular}>
@@ -55,6 +80,13 @@ export function HistorialRondas({ partida, onAtras, onEditar, onBorrar }: Props)
                 </div>
                 <span className={`${estilos.importe} cifra`}>{cuenta} €</span>
               </div>
+
+              {cierraLaPartida ? (
+                <p className={estilos.sello}>Aquí se acabó la partida</p>
+              ) : null}
+              {ignorada ? (
+                <p className={estilos.sello}>No se jugó: la partida ya había terminado</p>
+              ) : null}
 
               <div className={estilos.detalles}>
                 {ronda.propina > 0 ? (
@@ -70,13 +102,15 @@ export function HistorialRondas({ partida, onAtras, onEditar, onBorrar }: Props)
                 ))}
               </div>
 
-              <div className={estilos.estadoTras}>
-                {tras.map((estado) => (
-                  <span key={estado.jugadorId} className="cifra">
-                    {estado.nombre} <span className={estilos.saldo}>{estado.ahorros} €</span>
-                  </span>
-                ))}
-              </div>
+              {ignorada ? null : (
+                <div className={estilos.estadoTras}>
+                  {tras.map((estado) => (
+                    <span key={estado.jugadorId} className="cifra">
+                      {estado.nombre} <span className={estilos.saldo}>{estado.ahorros} €</span>
+                    </span>
+                  ))}
+                </div>
+              )}
 
               {borrando ? (
                 <div className={estilos.confirmacion}>

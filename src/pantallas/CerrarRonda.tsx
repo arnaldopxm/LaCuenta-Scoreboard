@@ -7,6 +7,7 @@ import { LineaTicket, SeparadorTicket, Ticket } from '../componentes/Ticket.tsx'
 import {
   LIMITE_MANO_MAX,
   concedeAumento,
+  derivar,
   estadosDePartida,
   parsearImporte,
   previsualizarRonda,
@@ -96,9 +97,26 @@ export function CerrarRonda({ partida, rondaEditada, onAtras, onConfirmar }: Pro
 
   const vista = useMemo(() => {
     if (!borrador || !listo) return null
-    const rondaBorrador: Ronda = { id: 'previsualizacion', indice: contexto.rondas.length, ...borrador }
+    const rondaBorrador: Ronda = {
+      id: 'previsualizacion',
+      indice: contexto.rondas.length,
+      ...borrador,
+    }
     return previsualizarRonda(contexto, rondaBorrador)
   }, [borrador, contexto, listo])
+
+  /**
+   * Rondas que quedarían por detrás del fin de partida si se guarda esta
+   * corrección. Es la consecuencia menos obvia de editar el pasado, así que se
+   * avisa antes y no después.
+   */
+  const rondasQueDejarianDeContar = useMemo(() => {
+    if (!rondaEditada || !borrador || !listo) return 0
+    const rondasCorregidas = partida.rondas.map((r) =>
+      r.id === rondaEditada.id ? { ...r, ...borrador } : r,
+    )
+    return derivar(partida.jugadores, rondasCorregidas).rondasIgnoradas.length
+  }, [borrador, listo, partida, rondaEditada])
 
   function cambiarTipo(nuevo: TipoReparto) {
     setTipo(nuevo)
@@ -248,9 +266,11 @@ export function CerrarRonda({ partida, rondaEditada, onAtras, onConfirmar }: Pro
         <Ticket
           titulo="Previsualización"
           nota={
-            editando
-              ? 'Al guardar se recalculan también las rondas posteriores'
-              : 'Revisa antes de confirmar'
+            !editando
+              ? 'Revisa antes de confirmar'
+              : rondasQueDejarianDeContar > 0
+                ? 'La partida acabaría aquí y las rondas de después no se habrían jugado'
+                : 'Al guardar se recalculan también las rondas posteriores'
           }
         >
           <LineaTicket concepto="Cartas" importe={`${parsearImporte(total) ?? 0} €`} />
@@ -319,6 +339,14 @@ export function CerrarRonda({ partida, rondaEditada, onAtras, onConfirmar }: Pro
                 destacada
               />
             </>
+          ) : null}
+
+          {rondasQueDejarianDeContar > 0 ? (
+            <LineaTicket
+              concepto="Rondas anuladas"
+              importe={String(rondasQueDejarianDeContar)}
+              destacada
+            />
           ) : null}
         </Ticket>
       ) : null}

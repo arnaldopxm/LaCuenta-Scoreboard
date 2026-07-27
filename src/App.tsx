@@ -1,6 +1,6 @@
-import { useState } from 'react'
 import { AvisoActualizacion } from './componentes/AvisoActualizacion.tsx'
 import type { BorradorRonda } from './dominio/index.ts'
+import { useNavegacion } from './estado/useNavegacion.ts'
 import { usePartida } from './estado/usePartida.ts'
 import { useTema } from './estado/useTema.ts'
 import { CerrarRonda } from './pantallas/CerrarRonda.tsx'
@@ -13,9 +13,8 @@ import { NuevaPartida } from './pantallas/NuevaPartida.tsx'
 import estilos from './App.module.css'
 
 /**
- * Navegación por estado interno, sin router ni URLs: son siete pantallas y el
- * móvil se pasa de mano en mano, así que cada una lleva su propio botón de
- * volver bien visible.
+ * Navegación por pila sobre el historial del navegador: sin router ni URLs,
+ * pero con el botón físico de atrás funcionando. Ver `useNavegacion`.
  */
 type Vista =
   | { nombre: 'inicio' }
@@ -26,10 +25,12 @@ type Vista =
   | { nombre: 'archivo' }
   | { nombre: 'ver'; partidaId: string }
 
+const INICIO: Vista = { nombre: 'inicio' }
+
 export function App() {
   const control = usePartida()
   const { alternar, oscuro } = useTema()
-  const [vista, setVista] = useState<Vista>({ nombre: 'inicio' })
+  const { vista, ir, volver, reemplazar, reiniciar } = useNavegacion<Vista>(INICIO)
 
   const { partida, terminadas, cargando, errorGuardado } = control
 
@@ -46,14 +47,21 @@ export function App() {
   )
 
   function Pantallas() {
-    const alInicio = () => setVista({ nombre: 'inicio' })
+    const archivo = (
+      <HistorialPartidas
+        partidas={terminadas}
+        onAtras={volver}
+        onVer={(elegida) => ir({ nombre: 'ver', partidaId: elegida.id })}
+        onBorrar={(id) => void control.borrarDelHistorial(id)}
+      />
+    )
     const inicio = (
       <Inicio
         partida={partida}
         numTerminadas={terminadas.length}
-        onContinuar={() => setVista({ nombre: 'marcador' })}
-        onNueva={() => setVista({ nombre: 'nueva' })}
-        onHistorial={() => setVista({ nombre: 'archivo' })}
+        onContinuar={() => ir({ nombre: 'marcador' })}
+        onNueva={() => ir({ nombre: 'nueva' })}
+        onHistorial={() => ir({ nombre: 'archivo' })}
       />
     )
 
@@ -64,43 +72,29 @@ export function App() {
       case 'nueva':
         return (
           <NuevaPartida
-            onAtras={alInicio}
+            onAtras={volver}
             onCrear={async (nombres) => {
               await control.nueva(nombres)
-              setVista({ nombre: 'marcador' })
+              // Sustituye al formulario: volver atrás desde el marcador tiene
+              // que llevar al inicio, no a crear otra partida encima.
+              reemplazar({ nombre: 'marcador' })
             }}
           />
         )
 
       case 'archivo':
-        return (
-          <HistorialPartidas
-            partidas={terminadas}
-            onAtras={alInicio}
-            onVer={(elegida) => setVista({ nombre: 'ver', partidaId: elegida.id })}
-            onBorrar={(id) => void control.borrarDelHistorial(id)}
-          />
-        )
+        return archivo
 
       case 'ver': {
         const guardada = terminadas.find((p) => p.id === vista.partidaId)
-        // Si se ha borrado desde otra pestaña, el archivo sigue siendo válido.
-        if (!guardada) {
-          return (
-            <HistorialPartidas
-              partidas={terminadas}
-              onAtras={alInicio}
-              onVer={(elegida) => setVista({ nombre: 'ver', partidaId: elegida.id })}
-              onBorrar={(id) => void control.borrarDelHistorial(id)}
-            />
-          )
-        }
+        // Si se ha borrado mientras se miraba, el archivo sigue siendo válido.
+        if (!guardada) return archivo
         return (
           <FinPartida
             partida={guardada}
             soloLectura
             onDesempatar={() => undefined}
-            onCerrar={() => setVista({ nombre: 'archivo' })}
+            onCerrar={volver}
           />
         )
       }
@@ -119,10 +113,10 @@ export function App() {
             <FinPartida
               partida={partida}
               onDesempatar={(ganadorId) => void control.desempatar(ganadorId)}
-              onHistorialRondas={() => setVista({ nombre: 'rondas' })}
+              onHistorialRondas={() => ir({ nombre: 'rondas' })}
               onCerrar={async () => {
                 await control.archivar()
-                alInicio()
+                reiniciar(INICIO)
               }}
             />
           )
@@ -132,33 +126,31 @@ export function App() {
           return (
             <HistorialRondas
               partida={partida}
-              onAtras={() => setVista({ nombre: 'marcador' })}
-              onEditar={(ronda) => setVista({ nombre: 'cerrar', rondaId: ronda.id })}
+              onAtras={volver}
+              onEditar={(ronda) => ir({ nombre: 'cerrar', rondaId: ronda.id })}
               onBorrar={(rondaId) => void control.borrarRonda(rondaId)}
             />
           )
         }
 
         if (vista.nombre === 'cerrar') {
-          const rondaEditada = vista.rondaId
-            ? partida.rondas.find((r) => r.id === vista.rondaId)
-            : undefined
-          const volverA: Vista = { nombre: vista.rondaId ? 'rondas' : 'marcador' }
           const rondaId = vista.rondaId
+          const rondaEditada = rondaId ? partida.rondas.find((r) => r.id === rondaId) : undefined
 
           return (
             <CerrarRonda
               partida={partida}
               rondaEditada={rondaEditada}
-              onAtras={() => setVista(volverA)}
+              onAtras={volver}
               onConfirmar={async (borrador: BorradorRonda) => {
                 if (rondaId) {
                   await control.editarRonda(rondaId, borrador)
-                  setVista({ nombre: 'rondas' })
                 } else {
                   await control.cerrarRonda(borrador)
-                  setVista({ nombre: 'marcador' })
                 }
+                // Se sale igual que con el botón de atrás: al historial si se
+                // venía de corregir, al marcador si era una ronda nueva.
+                volver()
               }}
             />
           )
@@ -169,10 +161,10 @@ export function App() {
             partida={partida}
             oscuro={oscuro}
             onAlternarTema={alternar}
-            onCerrarRonda={() => setVista({ nombre: 'cerrar' })}
-            onHistorial={() => setVista({ nombre: 'rondas' })}
+            onCerrarRonda={() => ir({ nombre: 'cerrar' })}
+            onHistorial={() => ir({ nombre: 'rondas' })}
             onDeshacer={() => void control.deshacer()}
-            onSalir={alInicio}
+            onSalir={volver}
           />
         )
       }

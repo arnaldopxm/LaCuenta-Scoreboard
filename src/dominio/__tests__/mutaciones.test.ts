@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { estadosDePartida, estadosTrasCadaRonda } from '../derivarEstado.ts'
+import { estadosDePartida, instantaneasDeRondas } from '../derivarEstado.ts'
 import { clasificar } from '../finPartida.ts'
 import {
   anadirRonda,
@@ -104,8 +104,8 @@ describe('editar una ronda pasada', () => {
     expect(corregida.rondas.map((r) => r.indice)).toEqual([0, 1, 2, 3, 4])
 
     // Y los estados intermedios del historial también se han movido.
-    const historial = estadosTrasCadaRonda(corregida)
-    expect(ahorrosDe(historial[1]!, 'j1')).toBe(600)
+    const historial = instantaneasDeRondas(corregida)
+    expect(ahorrosDe(historial[1]!.estados, 'j1')).toBe(600)
   })
 
   it('editar una ronda puede terminar la partida', () => {

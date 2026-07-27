@@ -25,7 +25,7 @@ npm run preview      # sirve dist/ como en producción
 ## Cómo pasar los tests
 
 ```bash
-npm test             # los 101 tests del dominio y la persistencia
+npm test             # los 114 tests del dominio y la persistencia
 npm run test:watch
 npm run typecheck    # app y service worker, cada uno con su tsconfig
 ```
@@ -40,7 +40,7 @@ npm run verificar:offline
 
 Levanta un servidor estático con `dist/`, abre Chromium, instala el service worker, juega una partida, **corta la red del navegador**, recarga y comprueba que todo siga en pie. También vigila que no salga ni una petición fuera del origen.
 
-Las diez comprobaciones que hace:
+Las catorce comprobaciones que hace:
 
 | Comprobación | Qué verifica |
 |---|---|
@@ -49,8 +49,12 @@ Las diez comprobaciones que hace:
 | Previsualización con redondeo al alza | 141 € entre 4 → 36 € cada uno |
 | Ahorros aplicados al marcador | El fold de rondas llega a la pantalla |
 | Aumento de mano concedido solo al pagador | El co-pagador no sube |
+| Atrás desde el marcador lleva al inicio | El formulario de partida nueva no se apila |
+| Atrás desde corregir vuelve al historial | Pila de tres niveles |
+| Atrás desde el historial vuelve al marcador | Desapilado completo |
+| Guardar una corrección devuelve al historial | Confirmar sale por donde se entró |
 | La app arranca en modo avión | Recarga sin red |
-| La partida sobrevive intacta sin red | IndexedDB persiste |
+| La partida y la corrección sobreviven sin red | IndexedDB persiste |
 | Navegación servida desde caché | Arranque en frío sin red |
 | Cero peticiones fuera del origen | Ni fuentes, ni iconos, ni telemetría |
 | Sin errores de JavaScript | Incluidas violaciones de CSP |
@@ -80,7 +84,9 @@ Los dos escriben archivos que **se comitean al repositorio**. En tiempo de ejecu
 | Playwright | devDep | Solo para la verificación offline |
 | sharp | devDep | Solo para generar los iconos |
 
-**Cero dependencias de runtime más allá de React y Dexie.** Sin router (son siete pantallas), sin librería de estado, sin librería de iconos, sin framework de CSS. `npm audit` sale limpio.
+**Cero dependencias de runtime más allá de React y Dexie.** Sin router, sin librería de estado, sin librería de iconos, sin framework de CSS. `npm audit` sale limpio.
+
+En lugar de un router hay un hook de ~80 líneas (`src/estado/useNavegacion.ts`): una pila de pantallas sincronizada con la History API. No hay URLs —la app se instala, no se enlaza— pero **el botón físico de atrás de Android y el gesto de iOS funcionan**, que era lo único que un router aportaba aquí. La profundidad viaja en el `state` de cada entrada del historial, así que mantener pulsado el atrás para saltar tres pantallas de golpe también deja la pila coherente.
 
 ### Por qué no hay Workbox
 
@@ -108,7 +114,7 @@ src/
 │   ├─ validacion.ts        importes enteros y saneado de nombres
 │   └─ __tests__/           los catorce casos obligatorios, uno a uno
 ├─ persistencia/    Dexie y repositorio de partidas
-├─ estado/          el puente con React: usePartida y useTema
+├─ estado/          el puente con React: usePartida, useTema, useNavegacion
 ├─ pantallas/       Inicio, NuevaPartida, Marcador, CerrarRonda,
 │                   HistorialRondas, FinPartida, HistorialPartidas
 ├─ componentes/     Cartucho, Pizarra, Ticket, FilaJugador, controles
@@ -127,6 +133,16 @@ Esto es lo que hace que editar la ronda 2 de 7 sea trivial y correcto: se recalc
 ### El redondeo al alza es intencional
 
 Cada jugador paga `ceil(cuenta / n)`. Con 100 € a pachas entre 3, salen 34 € cada uno, o sea 102 € pagados para una cuenta de 100 €. Se prefieren céntimos limpios en la mesa a que la suma cuadre al euro. **No lo "arregles"** repartiendo el resto ni guardando decimales; hay tests que fijan este comportamiento.
+
+### La partida se para en seco al llegar el fin
+
+El recorrido de rondas **para** en cuanto una deja a alguien sin ahorros. Las reglas no dan margen: ahí se acabó, así que ninguna ronda posterior pudo jugarse y ninguna puede mover el dinero de nadie.
+
+En una partida normal esto no se nota, porque la interfaz no deja cerrar más rondas una vez terminada. Solo aparece al **corregir el pasado**: si arreglas la ronda 2 y resulta que alguien se arruinó ahí, las rondas 3, 4 y 5 nunca ocurrieron.
+
+Esas rondas **no se borran**. Siguen guardadas, el historial las enseña tachadas con un sello de "no se jugó", y se pueden corregir o borrar. En cuanto arregles o quites la ronda culpable, vuelven al juego solas. La pantalla de corregir avisa antes de guardar, en el propio ticket: *rondas anuladas: 3*.
+
+Borrar datos del usuario porque un número cambió sería la decisión fácil y la equivocada.
 
 ### El clamp a 0 vive solo en un archivo
 
@@ -179,13 +195,15 @@ Sin emojis en la interfaz. Los iconos son SVG dibujados a mano en el propio cód
 
 2. **Qué pasa si la cuenta supera los ahorros del pagador.** Se asume clamp a 0 (ver arriba). Es la asunción con más peso de todo el marcador y está aislada para poder cambiarla.
 
-3. **Rondas posteriores al fin de partida.** Si al corregir una ronda pasada resulta que alguien se arruinó antes, las rondas siguientes **se siguen aplicando** en vez de descartarse. Es lo coherente con el modelo de fold puro y con los tests del encargo, pero se puede discutir: la alternativa sería marcarlas como no jugadas.
+3. **A pachas sin el pagador.** Nada impide desmarcar a quien pidió la cuenta. Se deja pasar a propósito, porque la app no conoce los estados de mesa y el usuario puede tener un motivo.
 
-4. **A pachas sin el pagador.** Nada impide desmarcar a quien pidió la cuenta. Se deja pasar a propósito, porque la app no conoce los estados de mesa y el usuario puede tener un motivo.
+4. **Nombres repetidos.** Se rechazan al crear la partida, comparando sin distinguir mayúsculas. Dos Javieres en la mesa tienen que distinguirse.
 
-5. **Nombres repetidos.** Se rechazan al crear la partida, comparando sin distinguir mayúsculas. Dos Javieres en la mesa tienen que distinguirse.
+### Ya cerradas
 
-6. **Botón físico de atrás.** La navegación es por estado interno, sin URLs: en Android el atrás del sistema cierra la app en vez de volver a la pantalla anterior. Fue una decisión consciente; cada pantalla lleva su propio botón de volver.
+- **Rondas posteriores al fin de partida.** Estuvieron un tiempo aplicándose. Ahora la derivación para en seco al llegar el fin y las rondas de después quedan anuladas pero visibles, no borradas. Ver "La partida se para en seco al llegar el fin".
+
+- **Botón físico de atrás.** La navegación arrancó siendo estado interno sin historial, así que en Android el atrás cerraba la app. Ahora hay una pila sincronizada con la History API y funciona; sigue sin haber URLs, que no hacían falta.
 
 ---
 

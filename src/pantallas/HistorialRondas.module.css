@@ -130,3 +130,55 @@
   color: var(--tinta-media);
   font-weight: 600;
 }
+
+/* Aviso de que hay rondas por detrás del fin de partida. */
+.avisoHuerfanas {
+  padding: var(--esp-m);
+  background: var(--pizarra);
+  color: var(--pizarra-tinta);
+  border: 2px solid var(--borde-fuerte);
+  border-radius: var(--radio-m);
+  box-shadow: var(--sombra-carta);
+  font-size: 0.9rem;
+}
+
+/* La ronda en la que alguien se quedó sin ahorros. */
+.tarjetaFinal {
+  border-color: var(--peligro);
+}
+
+/*
+ * Rondas guardadas que no se jugaron: la partida ya había terminado antes de
+ * llegar a ellas. Se atenúan pero se dejan tocables, porque corregir la ronda
+ * culpable es justo la forma de recuperarlas.
+ */
+.tarjetaIgnorada {
+  background: var(--superficie-hundida);
+  border-style: dashed;
+  box-shadow: none;
+}
+
+.tarjetaIgnorada .pagador,
+.tarjetaIgnorada .importe,
+.tarjetaIgnorada .modo,
+.tarjetaIgnorada .detalles {
+  opacity: 0.55;
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+}
+
+.tarjetaIgnorada .indice {
+  background: var(--tinta-tenue);
+}
+
+.sello {
+  align-self: flex-start;
+  padding: 2px var(--esp-s);
+  border: 1px dashed var(--borde-fuerte);
+  border-radius: var(--radio-s);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--peligro);
+}
