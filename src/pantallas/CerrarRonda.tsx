@@ -3,15 +3,18 @@ import { Boton } from '../componentes/Boton.tsx'
 import { Casilla, CampoNumero, GrupoOpciones, SelectorJugador } from '../componentes/Controles.tsx'
 import { Pantalla } from '../componentes/Pantalla.tsx'
 import { Pizarra } from '../componentes/Pizarra.tsx'
+import { Sumador } from '../componentes/Sumador.tsx'
 import { LineaTicket, SeparadorTicket, Ticket } from '../componentes/Ticket.tsx'
 import {
   LIMITE_MANO_MAX,
   concedeAumento,
+  cuentaDeSumandos,
   derivar,
   estadosDePartida,
   parsearImporte,
   previsualizarRonda,
   puedeAumentar,
+  sumarImportes,
   validarBorrador,
   type BorradorRonda,
   type Partida,
@@ -55,6 +58,13 @@ export function CerrarRonda({ partida, rondaEditada, onAtras, onConfirmar }: Pro
   const [participantes, setParticipantes] = useState<string[]>(
     rondaEditada?.reparto.tipo === 'a-pachas' ? rondaEditada.reparto.participantesIds : todosLosIds,
   )
+  /**
+   * Desglose del sumador de cartas. Es un borrador auxiliar: la cifra que
+   * manda siempre es la del campo. Si se teclea el total a mano, el desglose
+   * deja de corresponderse y se descarta, para no enseñar dos verdades.
+   */
+  const [cartasSumadas, setCartasSumadas] = useState<number[]>([])
+
   // Al corregir una ronda que ya daba aumento, es que el mínimo se cumplió.
   const [minimoCartas, setMinimoCartas] = useState(rondaEditada?.aumentoMano ?? false)
   const [quiereAumento, setQuiereAumento] = useState(rondaEditada?.aumentoMano ?? false)
@@ -118,6 +128,16 @@ export function CerrarRonda({ partida, rondaEditada, onAtras, onConfirmar }: Pro
     return derivar(partida.jugadores, rondasCorregidas).rondasIgnoradas.length
   }, [borrador, listo, partida, rondaEditada])
 
+  function cambiarSumadas(siguientes: number[]) {
+    setCartasSumadas(siguientes)
+    setTotal(siguientes.length === 0 ? '' : String(sumarImportes(siguientes)))
+  }
+
+  function cambiarTotalAMano(texto: string) {
+    setTotal(texto)
+    if (cartasSumadas.length > 0) setCartasSumadas([])
+  }
+
   function cambiarTipo(nuevo: TipoReparto) {
     setTipo(nuevo)
     // A pachas empieza con todo el mundo marcado; se desmarca a quien no toque.
@@ -172,10 +192,11 @@ export function CerrarRonda({ partida, rondaEditada, onAtras, onConfirmar }: Pro
         <CampoNumero
           etiqueta="Total de las cartas"
           valor={total}
-          onCambio={setTotal}
+          onCambio={cambiarTotalAMano}
           ayuda="Lo que suman los platos y bebidas de la mesa, ya con Premium y platos quemados aplicados."
           autoFocus={!editando}
         />
+        <Sumador importes={cartasSumadas} onCambio={cambiarSumadas} />
       </section>
 
       {/*
@@ -242,7 +263,17 @@ export function CerrarRonda({ partida, rondaEditada, onAtras, onConfirmar }: Pro
       <section className={estilos.bloque}>
         <h2 className={estilos.subtitulo}>Aumento de mano</h2>
         <div className={estilos.casillas}>
-          <Casilla marcada={minimoCartas} onCambio={setMinimoCartas}>
+          <Casilla
+            marcada={minimoCartas}
+            onCambio={setMinimoCartas}
+            // Pista, no decisión: la app no ve la mesa, así que el dato lo
+            // sigue confirmando quien está jugando.
+            subtexto={
+              cartasSumadas.length > 0
+                ? `En el sumador llevas ${cuentaDeSumandos(cartasSumadas)}.`
+                : undefined
+            }
+          >
             {`Se jugaron al menos ${partida.jugadores.length} cartas`}
           </Casilla>
           <Casilla

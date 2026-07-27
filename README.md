@@ -25,7 +25,7 @@ npm run preview      # sirve dist/ como en producción
 ## Cómo pasar los tests
 
 ```bash
-npm test             # los 114 tests del dominio y la persistencia
+npm test             # los 125 tests del dominio y la persistencia
 npm run test:watch
 npm run typecheck    # app y service worker, cada uno con su tsconfig
 ```

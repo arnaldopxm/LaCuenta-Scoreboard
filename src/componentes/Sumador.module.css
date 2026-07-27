@@ -1,0 +1,187 @@
+/*
+ * Sumador de cartas.
+ *
+ * Va sobre papel y no sobre pizarra a propósito: el total de las cartas se
+ * cuenta ANTES de pedir la cuenta, así que no le corresponde el código visual
+ * de las cartas post-cuenta.
+ */
+
+.abrir {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--esp-s);
+  width: 100%;
+  min-height: var(--toque-min);
+  padding: var(--esp-s) var(--esp-m);
+  border: 2px dashed var(--borde-fuerte);
+  border-radius: var(--radio-m);
+  background: transparent;
+  font-weight: 600;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-m);
+  padding: var(--esp-m);
+  background: var(--superficie);
+  border: 2px solid var(--borde-fuerte);
+  border-radius: var(--radio-m);
+  box-shadow: var(--sombra-carta);
+}
+
+.cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--esp-s);
+}
+
+.rotulo {
+  font-family: var(--fuente-titulo);
+  font-size: 1rem;
+}
+
+.cerrar {
+  min-height: 36px;
+  padding: var(--esp-xs) var(--esp-m);
+  border: 2px solid var(--borde);
+  border-radius: var(--radio-s);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* --- Cartas ya sumadas --- */
+
+.cartas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--esp-xs);
+  min-height: 34px;
+  align-items: center;
+}
+
+.vacio {
+  font-size: 0.85rem;
+  color: var(--tinta-tenue);
+}
+
+.carta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--esp-xs);
+  min-height: 34px;
+  padding: 2px var(--esp-s);
+  background: var(--superficie-hundida);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-s);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.quitar {
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--tinta-media);
+}
+
+/* --- Pantalla --- */
+
+.pantalla {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--esp-m);
+  padding: var(--esp-s) var(--esp-m);
+  background: var(--pizarra);
+  color: var(--pizarra-tinta);
+  border-radius: var(--radio-s);
+}
+
+.etiquetaPantalla {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #b8a892;
+}
+
+.entrada {
+  font-size: 2rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--mostaza);
+  line-height: 1.1;
+}
+
+.totalZona {
+  text-align: right;
+}
+
+.total {
+  font-size: 1.4rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Teclado --- */
+
+.teclado {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--esp-s);
+}
+
+.tecla {
+  min-height: 54px;
+  border: 2px solid var(--borde-fuerte);
+  border-radius: var(--radio-m);
+  background: var(--superficie-hundida);
+  font-size: 1.4rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  box-shadow: var(--sombra-carta);
+}
+
+.tecla:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: none;
+}
+
+.tecla:disabled {
+  opacity: 0.4;
+}
+
+.teclaAuxiliar {
+  font-size: 1rem;
+  background: var(--superficie);
+}
+
+.anadir {
+  min-height: 56px;
+  border: 3px solid var(--borde-fuerte);
+  border-radius: var(--radio-m);
+  background: var(--mostaza);
+  color: #1e1a17;
+  font-family: var(--fuente-titulo);
+  font-size: 1.1rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  box-shadow: var(--sombra-elevada);
+}
+
+.anadir:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: none;
+}
+
+.anadir:disabled {
+  opacity: 0.45;
+  box-shadow: none;
+}
+
+.pista {
+  font-size: 0.8rem;
+  color: var(--tinta-media);
+}
