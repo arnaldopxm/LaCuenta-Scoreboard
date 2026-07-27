@@ -1,0 +1,63 @@
+.lista {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-m);
+}
+
+.tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-s);
+  padding: var(--esp-m);
+  background: var(--superficie);
+  border: 2px solid var(--borde-fuerte);
+  border-radius: var(--radio-m);
+  box-shadow: var(--sombra-carta);
+}
+
+.resumen {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-height: var(--toque-min);
+  text-align: left;
+  width: 100%;
+}
+
+.fecha {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--tinta-tenue);
+}
+
+.ganador {
+  font-family: var(--fuente-titulo);
+  font-size: 1.25rem;
+}
+
+.datos {
+  font-size: 0.85rem;
+  color: var(--tinta-media);
+}
+
+.confirmacion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-s);
+  padding: var(--esp-m);
+  background: var(--superficie-hundida);
+  border: 2px dashed var(--peligro);
+  border-radius: var(--radio-m);
+  font-weight: 600;
+  text-align: center;
+}
+
+.botones {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--esp-s);
+}

@@ -1,0 +1,22 @@
+.cargando {
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+  font-family: var(--fuente-titulo);
+  font-size: 1.3rem;
+  color: var(--tinta);
+  opacity: 0.8;
+}
+
+.errorGuardado {
+  position: sticky;
+  top: 0;
+  z-index: 15;
+  padding: var(--esp-s) var(--esp-m);
+  padding-top: max(var(--esp-s), env(safe-area-inset-top));
+  background: var(--peligro);
+  color: #f7ebd5;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.9rem;
+}

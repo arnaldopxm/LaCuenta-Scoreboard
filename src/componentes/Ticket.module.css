@@ -1,0 +1,94 @@
+/*
+ * El desglose de la cuenta como un ticket de papel de verdad.
+ *
+ * El crema está escrito a pelo en los data URI de los bordes dentados y no como
+ * variable: es intencional. El ticket es el objeto físico que hay en la mesa y
+ * no se invierte en modo oscuro, así que su papel nunca cambia de color.
+ */
+
+.envoltorio {
+  position: relative;
+  padding: 8px 0;
+}
+
+.dentadoSuperior,
+.dentadoInferior {
+  height: 8px;
+  background-repeat: repeat-x;
+  background-position: center;
+}
+
+.dentadoSuperior {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='8'%3E%3Cpolygon points='0,8 8,0 16,8' fill='%23f7ebd5'/%3E%3C/svg%3E");
+}
+
+.dentadoInferior {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='8'%3E%3Cpolygon points='0,0 8,8 16,0' fill='%23f7ebd5'/%3E%3C/svg%3E");
+}
+
+.cuerpo {
+  background: var(--ticket-papel);
+  color: var(--ticket-tinta);
+  font-family: var(--fuente-ticket);
+  font-size: 0.95rem;
+  padding: var(--esp-l) var(--esp-m);
+  box-shadow: var(--sombra-carta);
+}
+
+.encabezado {
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-weight: 700;
+  padding-bottom: var(--esp-m);
+}
+
+.linea {
+  display: flex;
+  align-items: baseline;
+  gap: var(--esp-xs);
+  padding: 3px 0;
+}
+
+.etiqueta {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 60%;
+}
+
+/* Puntos suspensivos que llevan la vista del concepto al importe. */
+.puntos {
+  flex: 1;
+  border-bottom: 1px dotted var(--ticket-tenue);
+  transform: translateY(-4px);
+  min-width: var(--esp-m);
+}
+
+.valor {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+.destacada {
+  font-weight: 700;
+}
+
+.tenue {
+  color: var(--ticket-tenue);
+}
+
+.separador {
+  border-top: 1px dashed var(--ticket-tenue);
+  margin: var(--esp-m) 0;
+}
+
+.nota {
+  padding-top: var(--esp-m);
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--ticket-tenue);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}

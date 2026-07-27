@@ -1,0 +1,65 @@
+.pantalla {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  /* Muescas y barra de gestos del iPhone: es el caso de uso real. */
+  padding-top: env(safe-area-inset-top);
+  padding-left: max(var(--esp-m), env(safe-area-inset-left));
+  padding-right: max(var(--esp-m), env(safe-area-inset-right));
+}
+
+.cabecera {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-m);
+  padding: var(--esp-m) 0;
+}
+
+.atras {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: var(--toque-min);
+  height: var(--toque-min);
+  border: 2px solid var(--borde-fuerte);
+  border-radius: var(--radio-m);
+  background: var(--superficie);
+  box-shadow: var(--sombra-carta);
+}
+
+.atras:active {
+  transform: translateY(2px);
+  box-shadow: none;
+}
+
+.tituloZona {
+  flex: 1;
+  min-width: 0;
+}
+
+.acciones {
+  flex: 0 0 auto;
+  display: flex;
+  gap: var(--esp-s);
+}
+
+.contenido {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-l);
+  padding-bottom: var(--esp-l);
+}
+
+/*
+ * Acción primaria anclada abajo: en la mesa se busca con el pulgar sin mirar.
+ */
+.pie {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-s);
+  padding: var(--esp-m) 0 max(var(--esp-m), env(safe-area-inset-bottom));
+  background: linear-gradient(to top, var(--lienzo) 70%, transparent);
+}

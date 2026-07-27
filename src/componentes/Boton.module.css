@@ -1,0 +1,67 @@
+.boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--esp-s);
+  min-height: var(--toque-min);
+  padding: var(--esp-m) var(--esp-l);
+  border: 2px solid var(--borde-fuerte);
+  border-radius: var(--radio-m);
+  font-weight: 600;
+  text-align: center;
+  box-shadow: var(--sombra-carta);
+  transition: transform 80ms ease, box-shadow 80ms ease;
+}
+
+.boton:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: none;
+}
+
+.boton:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.bloque {
+  width: 100%;
+}
+
+/* Acción dominante: cerrar ronda. Grande y sin competencia visual. */
+.primario {
+  background: var(--mostaza);
+  color: #1e1a17;
+  font-family: var(--fuente-titulo);
+  font-size: 1.25rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  min-height: 64px;
+  border-width: 3px;
+  box-shadow: var(--sombra-elevada);
+}
+
+.secundario {
+  background: var(--superficie);
+  color: var(--tinta);
+}
+
+.fantasma {
+  background: transparent;
+  border-color: var(--borde);
+  color: var(--tinta);
+  box-shadow: none;
+  font-weight: 400;
+}
+
+.peligro {
+  background: var(--peligro);
+  color: #f7ebd5;
+}
+
+/* Sobre bloque pizarra: los controles post-cuenta del juego. */
+.pizarra {
+  background: var(--pizarra-elevada);
+  border-color: var(--pizarra-borde);
+  color: var(--pizarra-tinta);
+}

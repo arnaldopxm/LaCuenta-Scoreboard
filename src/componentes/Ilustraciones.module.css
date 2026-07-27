@@ -1,0 +1,27 @@
+.hueco {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--esp-m);
+  padding: var(--esp-xl) var(--esp-m);
+  text-align: center;
+  color: var(--tinta);
+}
+
+.dibujo {
+  width: 100%;
+  max-width: 230px;
+  height: auto;
+  /*
+   * Marrón anaranjado, como el trazo de los dibujos del reglamento. La propia
+   * variable ya se aclara sobre pizarra en modo oscuro, así que no hace falta
+   * ninguna regla extra por tema.
+   */
+  color: var(--cartucho);
+  opacity: 0.9;
+}
+
+.texto {
+  max-width: 28ch;
+  color: var(--tinta-media);
+}

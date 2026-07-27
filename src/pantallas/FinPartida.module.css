@@ -1,0 +1,70 @@
+.desempate {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-m);
+  padding: var(--esp-l) var(--esp-m);
+  background: var(--pizarra);
+  color: var(--pizarra-tinta);
+  border: 3px solid var(--borde-fuerte);
+  border-radius: var(--radio-m);
+  box-shadow: var(--sombra-elevada);
+}
+
+.tituloDesempate {
+  font-family: var(--fuente-titulo);
+  font-size: 1.4rem;
+  color: var(--mostaza);
+}
+
+.explicacion {
+  font-size: 0.9rem;
+  color: #b8a892;
+}
+
+.banda {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: var(--esp-l);
+  background: var(--mostaza);
+  color: #1e1a17;
+  border: 3px solid var(--borde-fuerte);
+  border-radius: var(--radio-l);
+  box-shadow: var(--sombra-elevada);
+  transform: rotate(-1deg);
+}
+
+.gana {
+  font-family: var(--fuente-titulo);
+  font-size: 0.95rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.nombreGanador {
+  font-family: var(--fuente-titulo);
+  font-size: 2.2rem;
+  line-height: 1.05;
+  text-align: center;
+}
+
+.dineroGanador {
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.lista {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-s);
+}
+
+.pie {
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--tinta);
+  opacity: 0.8;
+}

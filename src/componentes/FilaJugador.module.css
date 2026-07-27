@@ -1,0 +1,84 @@
+.fila {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-m);
+  padding: var(--esp-m);
+  background: var(--superficie);
+  border: 2px solid var(--borde-fuerte);
+  border-radius: var(--radio-m);
+  box-shadow: var(--sombra-carta);
+}
+
+/* Quien se ha quedado sin ahorros: se marca, no se esconde ni se reordena. */
+.arruinado {
+  background: var(--superficie-hundida);
+  border-color: var(--peligro);
+}
+
+.identidad {
+  flex: 1;
+  min-width: 0;
+}
+
+.nombre {
+  font-family: var(--fuente-titulo);
+  font-size: 1.15rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mano {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--esp-xs);
+  margin-top: 2px;
+  font-size: 0.85rem;
+  color: var(--tinta-media);
+}
+
+.manoTope {
+  color: var(--vino);
+  font-weight: 600;
+}
+
+.dinero {
+  flex: 0 0 auto;
+  text-align: right;
+}
+
+.cifraDinero {
+  display: block;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+.arruinado .cifraDinero {
+  color: var(--peligro);
+}
+
+.etiquetaFuera {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--peligro);
+  font-weight: 700;
+}
+
+.medalla {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--borde-fuerte);
+  border-radius: 50%;
+  background: var(--mostaza);
+  font-family: var(--fuente-titulo);
+  font-size: 1rem;
+  color: #1e1a17;
+}
