@@ -68,11 +68,12 @@ jobs:
       url: ${{ steps.despliegue.outputs.page_url }}
     steps:
       - name: Configurar Pages
-        # `enablement` activa Pages y pone Actions como origen la primera vez,
-        # así no hay que tocar nada a mano en los ajustes del repositorio.
+        # Sin `enablement`: crear el sitio de Pages es administración del
+        # repositorio y el GITHUB_TOKEN de Actions no llega ahí, por mucho
+        # `pages: write` que tenga. Hay que activarlo una sola vez a mano en
+        # Ajustes > Pages > Source: GitHub Actions. A partir de ahí, este paso
+        # solo lee la configuración y el despliegue va solo en cada push.
         uses: actions/configure-pages@v6
-        with:
-          enablement: true
 
       - name: Desplegar
         id: despliegue
