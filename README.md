@@ -186,6 +186,8 @@ Esa decisión está aislada en `src/dominio/aplicarPago.ts`, en una función de 
 
 Código propietario, todos los derechos reservados: [LICENSE](LICENSE).
 
+Autor: **Arnaldo Alberto Quintero Segura**. Explotación comercial prevista: **Shiroo Innovation Group S.L.**, sociedad en constitución. Mientras no esté inscrita no tiene personalidad jurídica ni CIF, así que el copyright figura a nombre del autor como persona física y el aviso queda pendiente de actualizar cuando la sociedad exista.
+
 El repositorio es público para que el código pueda leerse, pero no es software libre. Los componentes de terceros mantienen sus propias licencias —React y Vitest MIT, Dexie y TypeScript Apache-2.0, las tres tipografías SIL OFL 1.1— y los avisos completos están en [TERCEROS.md](TERCEROS.md).
 
 **La Cuenta** es un juego de 2Tomatoes Games. Esta app es una herramienta no oficial de aficionado, sin relación con la editorial, y no incluye arte ni reglamento del juego.

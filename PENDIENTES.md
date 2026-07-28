@@ -131,7 +131,16 @@ Una opción intermedia si lo que se busca es sostener el proyecto: un enlace de 
 
 ## 6. Licencia del repositorio
 
-**Hecho.** El código es propietario, todos los derechos reservados: ver [LICENSE](LICENSE).
+**Hecho, con un seguimiento pendiente.** El código es propietario, todos los derechos reservados: ver [LICENSE](LICENSE). Autor, Arnaldo Alberto Quintero Segura; explotación comercial prevista, Shiroo Innovation Group S.L.
+
+### Al quedar la sociedad inscrita
+
+**Shiroo Innovation Group S.L. está en constitución**, así que hoy no tiene personalidad jurídica ni CIF y no puede ser titular de derechos. El aviso está redactado en consecuencia: copyright del autor como persona física, sociedad como destinataria prevista de los derechos de explotación. Cuando se inscriba hay dos cosas que hacer:
+
+- Actualizar `LICENSE` con la denominación definitiva y el CIF.
+- Formalizar **por escrito** la cesión de los derechos de explotación del autor a la sociedad. En España las cesiones de derechos de explotación se hacen por escrito, y sin ese documento la titularidad se queda donde está por mucho que lo diga un archivo del repositorio.
+
+Nada de esto es asesoramiento jurídico: es la lista de lo que queda por atar.
 
 Los avisos de terceros están en [TERCEROS.md](TERCEROS.md), con los textos copiados de los archivos de licencia de cada paquete. Queda un fleco menor anotado allí: el aviso de copyright de **Source Sans 3** viene del proyecto original y no del archivo que servimos, porque el subset de Google Fonts trae la tabla de nombres eliminada. Falta cotejar el rango de años exacto.
 
