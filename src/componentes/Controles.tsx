@@ -14,6 +14,11 @@ interface CampoNumeroProps {
   ayuda?: ReactNode
   enPizarra?: boolean
   autoFocus?: boolean
+  /**
+   * Deja meter importes negativos. Solo para el total de las cartas: los platos
+   * quemados restan. La propina no lo lleva, que un precio no es negativo.
+   */
+  permiteSigno?: boolean
 }
 
 export function CampoNumero({
@@ -23,8 +28,20 @@ export function CampoNumero({
   ayuda,
   enPizarra = false,
   autoFocus = false,
+  permiteSigno = false,
 }: CampoNumeroProps) {
   const id = useId()
+
+  /** El teclado numérico del móvil no trae menos, así que se filtra a mano. */
+  function limpiar(bruto: string): string {
+    const digitos = bruto.replace(/[^\d]/g, '')
+    if (!permiteSigno) return digitos
+    return bruto.trimStart().startsWith('-') ? `-${digitos}` : digitos
+  }
+
+  function alternarSigno() {
+    onCambio(valor.startsWith('-') ? valor.slice(1) : `-${valor.replace(/^-/, '')}`)
+  }
 
   return (
     <div className={enPizarra ? `${estilos.campo} ${estilos.enPizarra}` : estilos.campo}>
@@ -32,6 +49,16 @@ export function CampoNumero({
         {etiqueta}
       </label>
       <div className={estilos.cajaNumero}>
+        {permiteSigno ? (
+          <button
+            type="button"
+            className={estilos.signo}
+            onClick={alternarSigno}
+            aria-label="Cambiar el signo del importe"
+          >
+            ±
+          </button>
+        ) : null}
         <input
           id={id}
           className={`${estilos.entradaNumero} cifra`}
@@ -42,7 +69,7 @@ export function CampoNumero({
           autoComplete="off"
           value={valor}
           autoFocus={autoFocus}
-          onChange={(evento) => onCambio(evento.target.value.replace(/[^\d]/g, ''))}
+          onChange={(evento) => onCambio(limpiar(evento.target.value))}
           onFocus={(evento) => evento.target.select()}
         />
         <span className={estilos.euro} aria-hidden="true">

@@ -28,7 +28,10 @@ export function sanearNombre(entrada: string): string {
     .slice(0, MAX_LONGITUD_NOMBRE)
 }
 
-/** Importes: euros enteros, no negativos y dentro de un rango razonable. */
+/**
+ * Importes que no pueden bajar de cero: la propina y lo que paga cada jugador.
+ * La propina es el precio de una tapa, y un precio no es negativo.
+ */
 export function esImporteValido(valor: unknown): valor is number {
   return (
     typeof valor === 'number' &&
@@ -39,7 +42,26 @@ export function esImporteValido(valor: unknown): valor is number {
 }
 
 /**
- * Convierte lo tecleado en el campo numérico a un entero válido.
+ * Importes que SÍ pueden ser negativos: las cartas de la mesa y el total que
+ * suman.
+ *
+ * Un plato quemado resta (−10, −30...), así que tanto una carta como el total
+ * de las cartas pueden salir por debajo de cero. Es de donde viene el importe
+ * de cuenta negativo que el reglamento contempla, y por eso `calcularCuenta`
+ * remata con `max(0, ...)`: la propina se suma ANTES de ese corte, o el
+ * resultado no cuadra.
+ */
+export function esImporteConSigno(valor: unknown): valor is number {
+  return (
+    typeof valor === 'number' &&
+    Number.isSafeInteger(valor) &&
+    valor >= -MAX_IMPORTE &&
+    valor <= MAX_IMPORTE
+  )
+}
+
+/**
+ * Convierte lo tecleado en un importe no negativo.
  * Devuelve null si no hay forma de interpretarlo.
  */
 export function parsearImporte(texto: string): number | null {
@@ -47,6 +69,16 @@ export function parsearImporte(texto: string): number | null {
   if (limpio === '') return null
   const valor = Number.parseInt(limpio, 10)
   return esImporteValido(valor) ? valor : null
+}
+
+/** Igual que `parsearImporte` pero respetando un menos por delante. */
+export function parsearImporteConSigno(texto: string): number | null {
+  const negativo = texto.trimStart().startsWith('-')
+  const digitos = texto.replace(/[^\d]/g, '')
+  if (digitos === '') return null
+  const magnitud = Number.parseInt(digitos, 10)
+  const valor = negativo ? -magnitud : magnitud
+  return esImporteConSigno(valor) ? valor : null
 }
 
 export function validarNumeroJugadores(cantidad: number): string | null {
@@ -88,7 +120,8 @@ export function validarBorrador(partida: Partida, borrador: BorradorRonda): stri
   if (!ids.has(borrador.pagadorId)) {
     errores.push('Hay que indicar quién pidió la cuenta.')
   }
-  if (!esImporteValido(borrador.totalCartas)) {
+  // El total de las cartas puede ser negativo: los platos quemados restan.
+  if (!esImporteConSigno(borrador.totalCartas)) {
     errores.push('El total de las cartas tiene que ser un número entero de euros.')
   }
   if (!esImporteValido(borrador.propina)) {
@@ -150,7 +183,7 @@ function esRondaValida(valor: unknown): valor is Ronda {
   if (
     typeof ronda.id !== 'string' ||
     typeof ronda.pagadorId !== 'string' ||
-    !esImporteValido(ronda.totalCartas) ||
+    !esImporteConSigno(ronda.totalCartas) ||
     !esImporteValido(ronda.propina) ||
     typeof ronda.aumentoMano !== 'boolean'
   ) {

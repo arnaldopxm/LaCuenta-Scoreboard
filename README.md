@@ -25,7 +25,7 @@ npm run preview      # sirve dist/ como en producción
 ## Cómo pasar los tests
 
 ```bash
-npm test             # los 114 tests del dominio y la persistencia
+npm test             # los 146 tests del dominio y la persistencia
 npm run test:watch
 npm run typecheck    # app y service worker, cada uno con su tsconfig
 ```
@@ -162,6 +162,18 @@ Esas rondas **no se borran**. Siguen guardadas, el historial las enseña tachada
 
 Borrar datos del usuario porque un número cambió sería la decisión fácil y la equivocada.
 
+### El total de las cartas puede ser negativo, y el orden importa
+
+Los platos quemados restan, así que `totalCartas` admite valores negativos. La propina no: es el precio de una tapa. Por eso hay dos validadores, `esImporteConSigno` para las cartas y `esImporteValido` para todo lo demás.
+
+Lo delicado es el **orden de las operaciones**, que ya venía fijado en el encargo y ahora tiene una causa concreta:
+
+```
+cuenta = max(0, totalCartas + propina)
+```
+
+La propina se suma **antes** del recorte a cero. Con las cartas en −20 y una propina de 5, la cuenta es `max(0, −15) = 0` y no paga nadie. Si el total se recortara a cero antes de tiempo, saldría `max(0, 0 + 5) = 5` y alguien pagaría 5 € que no debe. Hay un test que compara las dos formas de calcularlo justo para que nadie "simplifique" esto.
+
 ### El clamp a 0 vive solo en un archivo
 
 Las reglas oficiales dicen que la partida acaba cuando a alguien "se le acaban los ahorros", pero no aclaran qué pasa si la cuenta supera lo que ese jugador tiene. Aquí se asume **clamp a 0, sin deuda negativa**, y eso dispara el fin de partida.
@@ -204,6 +216,12 @@ Tipografías, todas SIL OFL y servidas desde el bundle:
 | Ticket | Courier Prime | |
 
 Sin emojis en la interfaz. Los iconos son SVG dibujados a mano en el propio código.
+
+---
+
+## Qué queda por hacer
+
+En [PENDIENTES.md](PENDIENTES.md): tocar una ficha para doblarla, dudas frecuentes dentro de la app, créditos, el manual del juego y el asunto de la publicidad, que choca de frente con los no-negociables y necesita una decisión consciente.
 
 ---
 

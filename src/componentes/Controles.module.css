@@ -231,3 +231,25 @@
 .opcionElegida .opcionDescripcion {
   color: #4a3d28;
 }
+
+/*
+ * Cambiar de signo en el campo del total. El teclado numérico del móvil no
+ * trae un menos, así que hay que ponerlo nosotros.
+ */
+.signo {
+  display: flex;
+  align-items: center;
+  padding: 0 var(--esp-m);
+  background: var(--superficie-hundida);
+  border-right: 2px solid var(--borde-fuerte);
+  font-size: 1.4rem;
+  font-weight: 700;
+  min-width: var(--toque-min);
+  justify-content: center;
+}
+
+.enPizarra .signo {
+  background: #100e0c;
+  border-right-color: var(--pizarra-borde);
+  color: var(--mostaza);
+}
