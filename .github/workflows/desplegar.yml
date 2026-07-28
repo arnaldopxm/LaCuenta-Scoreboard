@@ -43,8 +43,10 @@ jobs:
 
       - name: Auditar dependencias
         # El marcador no manda nada a ningún sitio; una dependencia con un CVE
-        # conocido es la vía más fácil de que eso deje de ser verdad.
-        run: npm audit --audit-level=high
+        # conocido es la vía más fácil de que eso deje de ser verdad. Sigue
+        # bloqueando: el script reintenta cuando el registro no contesta, pero
+        # nunca convierte un fallo en un aviso. El por qué, en el script.
+        run: bash scripts/auditar.sh
 
       - name: Tests del dominio y la persistencia
         run: npm test
