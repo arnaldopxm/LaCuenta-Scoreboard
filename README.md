@@ -82,6 +82,8 @@ El trabajo se hace en ramas y entra por pull request; `main` es lo que hay publi
 
 **Activación, una sola vez:** en *Ajustes → Pages → Build and deployment → Source*, elegir **GitHub Actions**. Crear el sitio de Pages es administración del repositorio, y el `GITHUB_TOKEN` de Actions no puede hacerlo por mucho `pages: write` que se le dé. A partir de ahí no hay que volver a tocar nada: cada push despliega solo.
 
+La concurrencia está partida en dos a propósito: una cola **por rama** a nivel de workflow, que cancela lo obsoleto de esa misma rama, y la cola global `pages` **solo en el job que publica**. Con un único grupo global —como estaba al principio— un push a cualquier rama cancelaba un despliegue de `main` que estuviera en cola, y eso no se ve, porque un run cancelado no sale en rojo.
+
 Un aviso: el paso `npm audit --audit-level=high` **bloquea el despliegue** si aparece un CVE alto, aunque sea en una dependencia de desarrollo. Es deliberado —la promesa de privacidad de esta app depende de no arrastrar basura— pero significa que un aviso de seguridad ajeno puede parar una publicación. Si algún día estorba, es un paso de cuatro líneas.
 
 ### Desplegar en otro sitio

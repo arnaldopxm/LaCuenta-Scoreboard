@@ -11,10 +11,20 @@ permissions:
   pages: write
   id-token: write
 
-# Un despliegue a la vez, sin cancelar el que esté a medias.
+# Una cola POR RAMA, no una global.
+#
+# Antes esto era `group: pages` a secas, y como el grupo no llevaba la rama,
+# todas las ejecuciones compartían una única cola: un push a cualquier rama
+# cancelaba un despliegue de main que estuviera esperando. Pasó de verdad —el
+# despliegue del PR #2 murió cinco segundos después de un push a la rama de
+# trabajo— y no se nota, porque un run cancelado no sale en rojo.
+#
+# Cancelar lo obsoleto de la MISMA rama sí interesa: ahorra minutos y no se
+# pierde nada. La serialización de los despliegues se resuelve en el job que
+# publica, no aquí.
 concurrency:
-  group: pages
-  cancel-in-progress: false
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   comprobar:
@@ -33,8 +43,10 @@ jobs:
 
       - name: Auditar dependencias
         # El marcador no manda nada a ningún sitio; una dependencia con un CVE
-        # conocido es la vía más fácil de que eso deje de ser verdad.
-        run: npm audit --audit-level=high
+        # conocido es la vía más fácil de que eso deje de ser verdad. Sigue
+        # bloqueando: el script reintenta cuando el registro no contesta, pero
+        # nunca convierte un fallo en un aviso. El por qué, en el script.
+        run: bash scripts/auditar.sh
 
       - name: Tests del dominio y la persistencia
         run: npm test
@@ -65,6 +77,14 @@ jobs:
     # alguien toque un ajuste del repositorio.
     if: github.ref_name == 'main'
     runs-on: ubuntu-latest
+
+    # Aquí sí hace falta cola global: GitHub Pages solo admite un despliegue a
+    # la vez. Solo main llega a este job, así que ninguna rama puede
+    # interferir. Y sin cancelar el que esté a medias.
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+
     environment:
       name: github-pages
       url: ${{ steps.despliegue.outputs.page_url }}
