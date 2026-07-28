@@ -149,7 +149,8 @@ export function Sumador({ importes, onCambio }: Props) {
       </button>
 
       <p className={estilos.pista}>
-        Toca una carta ya sumada para quitarla. El total va directo al campo de arriba.
+        Toca una carta ya sumada para quitarla. El total va directo al campo de arriba. Un plato
+        quemado va como <strong>0</strong>: no suma, pero cuenta como carta.
       </p>
     </section>
   )

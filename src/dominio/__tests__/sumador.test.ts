@@ -19,7 +19,9 @@ describe('sumar importes', () => {
     expect(sumarImportes(Array.from({ length: 50 }, () => MAX_IMPORTE))).toBe(MAX_IMPORTE)
   })
 
-  it('un plato quemado sencillamente no suma', () => {
+  it('un importe de cero no altera el total', () => {
+    // Aritmética trivial, pero fija que el cero es una entrada legítima y no
+    // algo a descartar: quien lo descarte rompe el recuento de más abajo.
     expect(sumarImportes([14, 0, 9])).toBe(23)
   })
 })
@@ -44,8 +46,23 @@ describe('doblar un importe para Premium', () => {
 })
 
 describe('cuántas cartas se llevan', () => {
-  it('cuenta solo los importes válidos', () => {
-    expect(cuentaDeSumandos([10, 0, 5, -2])).toBe(3)
+  /*
+   * Este recuento alimenta la pista de la casilla "se jugaron al menos N
+   * cartas", y la regla del aumento de mano cuenta CARTAS, no euros. De ahí
+   * que el caso del cero sea el que de verdad importa aquí.
+   */
+  it('un plato quemado cuenta como carta aunque valga 0 €', () => {
+    expect(cuentaDeSumandos([14, 0, 9])).toBe(3)
+  })
+
+  it('un plato quemado no infla el total mientras sí cuenta como carta', () => {
+    const cartas = [14, 0, 9]
+    expect(sumarImportes(cartas)).toBe(23)
+    expect(cuentaDeSumandos(cartas)).toBe(3)
+  })
+
+  it('descarta la basura, que no es lo mismo que un cero', () => {
+    expect(cuentaDeSumandos([10, 0, 5, -2, Number.NaN, 12.5])).toBe(3)
   })
 
   it('sin cartas, cero', () => {
