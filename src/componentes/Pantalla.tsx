@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { BotonTema } from './BotonTema.tsx'
 import { Cartucho } from './Cartucho.tsx'
 import estilos from './Pantalla.module.css'
 
@@ -6,12 +7,11 @@ interface Props {
   titulo: string
   children: ReactNode
   onAtras?: () => void
-  acciones?: ReactNode
   pie?: ReactNode
   tituloGrande?: boolean
 }
 
-export function Pantalla({ titulo, children, onAtras, acciones, pie, tituloGrande }: Props) {
+export function Pantalla({ titulo, children, onAtras, pie, tituloGrande }: Props) {
   return (
     <div className={estilos.pantalla}>
       <header className={estilos.cabecera}>
@@ -25,7 +25,12 @@ export function Pantalla({ titulo, children, onAtras, acciones, pie, tituloGrand
             {titulo}
           </Cartucho>
         </div>
-        {acciones ? <div className={estilos.acciones}>{acciones}</div> : null}
+        {/*
+          El tema, en toda pantalla que use esta cabecera. Antes era una acción
+          que pasaba el marcador, así que fuera de la partida no había forma de
+          cambiarlo.
+        */}
+        <BotonTema />
       </header>
 
       <main className={estilos.contenido}>{children}</main>

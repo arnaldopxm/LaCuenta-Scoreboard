@@ -146,15 +146,39 @@ comprobar(
   versionPintada ? `${versionPintada} · caché ${nombreCache}` : 'no se pinta ninguna versión',
 )
 
+/*
+ * El tema se cambiaba solo dentro de una partida, que es justo donde no se
+ * busca: se busca al abrir la app de noche. Se comprueba desde el inicio, y de
+ * paso que el botón aparezca en cada pantalla por la que se pasa.
+ */
+const botonTema = pagina.getByRole('button', { name: /Cambiar a modo/ })
+const temaDeLaRaiz = () => pagina.evaluate(() => document.documentElement.dataset.tema ?? 'sistema')
+
+await botonTema.click()
+comprobar('El tema se cambia desde el inicio, sin partida abierta', (await temaDeLaRaiz()) === 'oscuro')
+// Se vuelve al claro: las capturas de este recorrido son las del modo claro.
+await botonTema.click()
+
+const revisadas = []
+const sinBotonTema = []
+async function vigilarBotonTema(pantalla) {
+  revisadas.push(pantalla)
+  if (!(await botonTema.isVisible())) sinBotonTema.push(pantalla)
+}
+await vigilarBotonTema('inicio')
+
 // Se juega una partida entera para que haya algo que sobreviva al corte.
 await pagina.getByRole('button', { name: 'Nueva partida' }).click()
+await vigilarBotonTema('nueva partida')
 await pagina.getByRole('radio', { name: '5' }).click()
 if (CAPTURAS) await pagina.screenshot({ path: 'capturas/02-nueva-partida.png', fullPage: true })
 await pagina.getByRole('button', { name: 'Empezar' }).click()
 await pagina.waitForSelector('text=Ronda 1')
+await vigilarBotonTema('marcador')
 if (CAPTURAS) await pagina.screenshot({ path: 'capturas/03-marcador.png', fullPage: true })
 
 await pagina.getByRole('button', { name: 'Cerrar ronda' }).click()
+await vigilarBotonTema('cerrar ronda')
 await pagina.getByLabel('Quién pidió la cuenta').getByRole('radio', { name: 'Jugador 2' }).click()
 await pagina.getByLabel('Total de las cartas').fill('137')
 await pagina.getByLabel('Propina').fill('4')
@@ -195,8 +219,10 @@ await pagina.waitForSelector('text=Ronda 2')
 // Tres niveles: marcador -> historial -> corregir ronda.
 await pagina.getByRole('button', { name: 'Historial', exact: true }).click()
 await pagina.waitForSelector('text=Corregir')
+await vigilarBotonTema('historial de rondas')
 await pagina.getByRole('button', { name: 'Corregir' }).first().click()
 await pagina.waitForSelector('text=Corregir ronda 1')
+await vigilarBotonTema('corregir ronda')
 
 await pagina.goBack()
 await pagina.waitForSelector('text=Corregir', { timeout: 5000 })
@@ -222,6 +248,17 @@ await contexto.setOffline(true)
 await pagina.reload({ waitUntil: 'load' })
 await pagina.waitForSelector('text=Continuar partida', { timeout: 15000 })
 comprobar('La app arranca en modo avión', true)
+
+// El tema lo aplica el script en línea antes del primer pintado, así que tras
+// recargar tiene que seguir puesto y sin fogonazo por medio.
+comprobar('El tema elegido sobrevive a recargar sin red', (await temaDeLaRaiz()) === 'claro')
+comprobar(
+  'El botón de tema está en todas las pantallas del recorrido',
+  sinBotonTema.length === 0,
+  sinBotonTema.length === 0
+    ? `${revisadas.length} pantallas: ${revisadas.join(', ')}`
+    : `falta en: ${sinBotonTema.join(', ')}`,
+)
 
 await pagina.getByRole('button', { name: 'Continuar partida' }).click()
 await pagina.waitForSelector('text=Ronda 2')
@@ -250,8 +287,14 @@ comprobar('Sin errores de JavaScript', erroresReales.length === 0, erroresReales
 
 if (CAPTURAS) {
   await contexto.setOffline(false)
-  await pagina.emulateMedia({ colorScheme: 'dark' })
   await pagina.goto(BASE, { waitUntil: 'load' })
+  /*
+   * Con el botón y no con `emulateMedia`: al haber elegido tema a mano queda un
+   * `data-tema` que manda sobre la preferencia del sistema, así que emular el
+   * sistema en oscuro ya no pinta nada. Y así las capturas salen del camino que
+   * recorre el usuario de verdad.
+   */
+  await botonTema.click()
   await pagina.screenshot({ path: 'capturas/01-inicio-oscuro.png', fullPage: true })
   await pagina.getByRole('button', { name: 'Continuar partida' }).click()
   await pagina.waitForSelector('text=Ronda 2')

@@ -29,6 +29,12 @@
   gap: var(--esp-s);
 }
 
+/*
+ * El aviso es una tira, no una pantalla: los botones se quedan en el pulsable
+ * mínimo de 48 px en vez de los 64 del primario, y sin su cuerpo de letra grande.
+ */
 .botones :global(button) {
+  min-height: var(--toque-min);
   padding: var(--esp-s) var(--esp-m);
+  font-size: 1rem;
 }

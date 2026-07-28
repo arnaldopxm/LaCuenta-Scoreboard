@@ -1,11 +1,24 @@
 .inicio {
+  position: relative;
   display: flex;
   flex-direction: column;
   justify-content: center;
   gap: var(--esp-xl);
   min-height: 100dvh;
+  /* El último valor deja hueco al aviso de actualización; ver `Pantalla.module.css`. */
   padding: max(var(--esp-xl), env(safe-area-inset-top)) max(var(--esp-l), env(safe-area-inset-left))
-    max(var(--esp-xl), env(safe-area-inset-bottom)) max(var(--esp-l), env(safe-area-inset-right));
+    calc(max(var(--esp-xl), env(safe-area-inset-bottom)) + var(--alto-aviso, 0px))
+    max(var(--esp-l), env(safe-area-inset-right));
+}
+
+/*
+ * El botón de tema, arriba a la derecha y fuera del flujo: el rótulo y los
+ * botones siguen centrados en la pantalla como si no estuviera.
+ */
+.chrome {
+  position: absolute;
+  top: max(var(--esp-m), env(safe-area-inset-top));
+  right: max(var(--esp-m), env(safe-area-inset-right));
 }
 
 .rotulo {

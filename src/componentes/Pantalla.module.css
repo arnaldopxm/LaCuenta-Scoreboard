@@ -3,16 +3,30 @@
   flex-direction: column;
   min-height: 100dvh;
   /* Muescas y barra de gestos del iPhone: es el caso de uso real. */
-  padding-top: env(safe-area-inset-top);
   padding-left: max(var(--esp-m), env(safe-area-inset-left));
   padding-right: max(var(--esp-m), env(safe-area-inset-right));
 }
 
+/*
+ * La cabecera se queda arriba al desplazar, igual que el pie se queda abajo.
+ *
+ * En un formulario largo —cerrar ronda, con el teclado ocupando media pantalla—
+ * el título y el botón de volver se iban por arriba y no quedaba forma de saber
+ * en qué pantalla estabas ni cómo salir sin cerrar el teclado primero.
+ *
+ * El hueco de la muesca lo pone la cabecera y no la pantalla: pegada arriba
+ * tiene que tapar también esa franja, o el contenido desfila por debajo del
+ * reloj del móvil. El degradado deja el borde de abajo sin costura.
+ */
 .cabecera {
+  position: sticky;
+  top: 0;
+  z-index: 10;
   display: flex;
   align-items: center;
   gap: var(--esp-m);
-  padding: var(--esp-m) 0;
+  padding: calc(env(safe-area-inset-top) + var(--esp-m)) 0 var(--esp-m);
+  background: linear-gradient(to bottom, var(--lienzo) calc(100% - 10px), transparent);
 }
 
 .atras {
@@ -37,12 +51,6 @@
   min-width: 0;
 }
 
-.acciones {
-  flex: 0 0 auto;
-  display: flex;
-  gap: var(--esp-s);
-}
-
 .contenido {
   flex: 1;
   display: flex;
@@ -53,6 +61,10 @@
 
 /*
  * Acción primaria anclada abajo: en la mesa se busca con el pulgar sin mirar.
+ *
+ * `--alto-aviso` es el hueco que se le deja al aviso de actualización, que está
+ * fijo abajo y taparía el botón. Vale 0 cuando no hay aviso; lo publica
+ * `AvisoActualizacion` midiéndose.
  */
 .pie {
   position: sticky;
@@ -60,6 +72,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--esp-s);
-  padding: var(--esp-m) 0 max(var(--esp-m), env(safe-area-inset-bottom));
+  padding: var(--esp-m) 0
+    calc(max(var(--esp-m), env(safe-area-inset-bottom)) + var(--alto-aviso, 0px));
   background: linear-gradient(to top, var(--lienzo) 70%, transparent);
 }

@@ -1,4 +1,5 @@
 import { Boton } from '../componentes/Boton.tsx'
+import { BotonTema } from '../componentes/BotonTema.tsx'
 import { MesaVacia } from '../componentes/Ilustraciones.tsx'
 import { estadosDePartida, type Partida } from '../dominio/index.ts'
 import estilos from './Inicio.module.css'
@@ -23,6 +24,11 @@ export function Inicio({
 }: Props) {
   return (
     <div className={estilos.inicio}>
+      {/* El inicio no usa `Pantalla`, así que aquí el tema se pone a mano. */}
+      <div className={estilos.chrome}>
+        <BotonTema />
+      </div>
+
       <header className={estilos.rotulo}>
         <h1 className={estilos.titulo}>
           <span className={estilos.la}>La</span>
