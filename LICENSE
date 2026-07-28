@@ -1,0 +1,98 @@
+La Cuenta · Marcador
+
+Autor: Arnaldo Alberto Quintero Segura
+Copyright (c) 2026 Arnaldo Alberto Quintero Segura. Todos los derechos
+reservados.
+
+Explotación comercial: Shiroo Innovation Group S.L. (sociedad en
+constitución; pendiente de inscripción y de CIF).
+
+
+SOFTWARE PROPIETARIO
+
+Este repositorio es público para que el código pueda leerse, pero NO es
+software libre ni de código abierto. No se concede ninguna licencia de uso,
+copia ni distribución.
+
+Sin autorización previa y por escrito del titular de los derechos, queda
+prohibido:
+
+  - copiar, reproducir o distribuir este software, total o parcialmente;
+  - modificarlo o crear obras derivadas a partir de él;
+  - usarlo con fines comerciales;
+  - incorporarlo, entero o en partes, a otro proyecto;
+  - publicar copias o versiones propias de la aplicación.
+
+Sí está permitido leer el código con fines de estudio, y usar la aplicación
+publicada por el titular tal como se ofrece.
+
+
+NOTA SOBRE LA TITULARIDAD
+
+Shiroo Innovation Group S.L. se encuentra en proceso de constitución: a la
+fecha de este aviso no tiene aún personalidad jurídica propia ni CIF, y por
+tanto no puede ser todavía titular de derechos. Por eso el copyright figura a
+nombre del autor, persona física, y la sociedad consta como destinataria
+prevista de los derechos de explotación.
+
+Pendiente al quedar la sociedad inscrita:
+
+  - actualizar este aviso con la denominación definitiva y el CIF;
+  - formalizar por escrito la cesión de los derechos de explotación del
+    autor a la sociedad.
+
+Esto es una anotación práctica, no asesoramiento jurídico.
+
+
+COMPONENTES DE TERCEROS
+
+Este aviso cubre ÚNICAMENTE el código propio de este proyecto. Las
+dependencias y las tipografías incluidas mantienen sus propias licencias
+—MIT, Apache-2.0 y SIL Open Font License 1.1— y nada de lo anterior
+pretende restringirlas ni ampararlas.
+
+Los avisos y textos completos están en TERCEROS.md.
+
+
+SIN GARANTÍA
+
+El software se ofrece "tal cual", sin garantía de ningún tipo, expresa o
+implícita. El titular no responde de daño alguno derivado de su uso. Es un
+marcador para un juego de mesa: si la cuenta sale mal, discutidlo en la mesa.
+
+
+EL JUEGO
+
+"La Cuenta" es un juego de 2Tomatoes Games, diseñado por Litus Carreras y
+Ariadna Altimira. Esta aplicación es una herramienta no oficial de
+aficionado, sin relación con la editorial. Este aviso no otorga ningún
+derecho sobre el juego, su reglamento ni su arte.
+
+
+-----------------------------------------------------------------------
+
+ENGLISH SUMMARY
+
+Author: Arnaldo Alberto Quintero Segura
+Copyright (c) 2026 Arnaldo Alberto Quintero Segura. All rights reserved.
+Commercial exploitation: Shiroo Innovation Group S.L. (company currently
+being incorporated; registration and tax ID pending).
+
+This is proprietary software. The repository is public so that the code can
+be read, but no license to use, copy, modify or distribute it is granted.
+Written permission from the rights holder is required for any of those.
+
+Because the company is not yet incorporated, it cannot hold rights at the
+date of this notice; copyright is therefore held by the author as a natural
+person, with the company named as the intended assignee of the exploitation
+rights. This notice is to be updated, and the assignment formalised in
+writing, once the company is registered.
+
+This notice covers only the project's own code. Bundled third-party
+components keep their own licenses (MIT, Apache-2.0, SIL OFL 1.1); see
+TERCEROS.md for the full notices.
+
+Provided "as is", without warranty of any kind.
+
+"La Cuenta" is a game by 2Tomatoes Games. This is an unofficial fan-made
+tool, unaffiliated with the publisher.

@@ -45,7 +45,7 @@ Las catorce comprobaciones que hace:
 | Comprobación | Qué verifica |
 |---|---|
 | El service worker toma el control | Registro correcto |
-| Precache poblado | Los 14 recursos del shell |
+| Precache poblado | Los 16 recursos del shell, avisos legales incluidos |
 | Previsualización con redondeo al alza | 141 € entre 4 → 36 € cada uno |
 | Ahorros aplicados al marcador | El fold de rondas llega a la pantalla |
 | Aumento de mano concedido solo al pagador | El co-pagador no sube |
@@ -113,7 +113,7 @@ El plan original usaba `vite-plugin-pwa`. Al instalarlo aparecieron **8 CVEs hig
 - `vite-plugin-pwa@1.2.0`, que es lo que sugiere `npm audit fix`, **no soporta Vite 8**.
 - El problema no es de una versión concreta: **todas las versiones de `workbox-build` arrastran algún `rollup-plugin-off-main-thread` que depende de `ejs 3.x`**.
 
-Así que el service worker está escrito a mano (`src/sw/sw.ts`, ~100 líneas) más un plugin de build de ~60 (`plugin-sw.ts`). Para una app que precachea su shell entero y no habla con ningún servidor, Workbox no aportaba nada que compensara ocho CVEs.
+Así que el service worker está escrito a mano (`src/sw/sw.ts`, ~100 líneas) más un plugin de build de ~60 (`plugin-sw.ts`). Hay dos plugins propios más, igual de pequeños: `plugin-csp.ts` calcula el hash del script en línea para la CSP, y `plugin-avisos.ts` copia `LICENSE` y `TERCEROS.md` al bundle, porque la OFL exige que la licencia acompañe a los archivos de fuente que se distribuyen. Para una app que precachea su shell entero y no habla con ningún servidor, Workbox no aportaba nada que compensara ocho CVEs.
 
 ---
 
@@ -182,6 +182,18 @@ Esa decisión está aislada en `src/dominio/aplicarPago.ts`, en una función de 
 
 ---
 
+## Licencia
+
+Código propietario, todos los derechos reservados: [LICENSE](LICENSE).
+
+Autor: **Arnaldo Alberto Quintero Segura**. Explotación comercial prevista: **Shiroo Innovation Group S.L.**, sociedad en constitución. Mientras no esté inscrita no tiene personalidad jurídica ni CIF, así que el copyright figura a nombre del autor como persona física y el aviso queda pendiente de actualizar cuando la sociedad exista.
+
+El repositorio es público para que el código pueda leerse, pero no es software libre. Los componentes de terceros mantienen sus propias licencias —React y Vitest MIT, Dexie y TypeScript Apache-2.0, las tres tipografías SIL OFL 1.1— y los avisos completos están en [TERCEROS.md](TERCEROS.md).
+
+**La Cuenta** es un juego de 2Tomatoes Games. Esta app es una herramienta no oficial de aficionado, sin relación con la editorial, y no incluye arte ni reglamento del juego.
+
+---
+
 ## Privacidad
 
 Los únicos datos personales son nombres de pila tecleados a mano. Todo vive en IndexedDB, en el dispositivo, y **no sale de ahí jamás**: cero peticiones salientes, cero telemetría, cero terceros.
@@ -221,7 +233,7 @@ Sin emojis en la interfaz. Los iconos son SVG dibujados a mano en el propio cód
 
 ## Qué queda por hacer
 
-En [PENDIENTES.md](PENDIENTES.md): tocar una ficha para doblarla, dudas frecuentes dentro de la app, créditos, el manual del juego y el asunto de la publicidad, que choca de frente con los no-negociables y necesita una decisión consciente.
+En [PENDIENTES.md](PENDIENTES.md), ordenado de "se puede hacer ya" a "hay que decidir antes": tocar una ficha para doblarla, dudas frecuentes dentro de la app, comprobación activa de actualizaciones, invitación a instalar en Android e iOS, créditos, el manual del juego, el reconocimiento de cartas por foto y el asunto de la publicidad, que choca de frente con los no-negociables y necesita una decisión consciente.
 
 ---
 
