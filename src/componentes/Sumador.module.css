@@ -67,6 +67,13 @@
   color: var(--tinta-tenue);
 }
 
+/* Las cartas que restan se ven distintas: un plato quemado no es una tapa. */
+.cartaNegativa {
+  background: color-mix(in srgb, var(--peligro) 16%, var(--superficie));
+  border-color: var(--peligro);
+  color: var(--peligro);
+}
+
 .carta {
   display: inline-flex;
   align-items: center;
@@ -125,6 +132,11 @@
   font-variant-numeric: tabular-nums;
 }
 
+.entradaResta,
+.totalResta {
+  color: #ef8f78;
+}
+
 /* --- Teclado --- */
 
 .teclado {
@@ -158,8 +170,27 @@
   background: var(--superficie);
 }
 
+/* El signo, que es lo que gobierna los platos quemados. */
+.teclaSigno {
+  background: var(--superficie);
+  font-size: 1.5rem;
+}
+
+.teclaSigno[aria-pressed='true'] {
+  background: var(--peligro);
+  color: #f7ebd5;
+}
+
+/* Doblar y añadir, con el peso visual donde toca. */
+.acciones {
+  display: grid;
+  grid-template-columns: 1fr 2.4fr;
+  gap: var(--esp-s);
+  align-items: stretch;
+}
+
 .anadir {
-  min-height: 56px;
+  min-height: 54px;
   border: 3px solid var(--borde-fuerte);
   border-radius: var(--radio-m);
   background: var(--mostaza);

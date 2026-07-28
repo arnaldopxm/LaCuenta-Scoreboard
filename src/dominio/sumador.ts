@@ -1,4 +1,4 @@
-import { MAX_IMPORTE, esImporteValido } from './validacion.ts'
+import { MAX_IMPORTE, esImporteConSigno } from './validacion.ts'
 
 /**
  * Aritmética del sumador de cartas.
@@ -8,13 +8,20 @@ import { MAX_IMPORTE, esImporteValido } from './validacion.ts'
  * usuario va tecleando mientras canta las cartas de la mesa.
  */
 
-/** Suma una lista de importes, ignorando lo que no sea un entero válido. */
+/**
+ * Suma una lista de cartas, ignorando lo que no sea un entero válido.
+ *
+ * Las cartas pueden restar: un plato quemado vale −10, −30... así que tanto
+ * los sumandos como el resultado pueden ser negativos. Quien recorte esto a
+ * cero se lleva por delante el cálculo, porque la propina se suma DESPUÉS y
+ * antes del `max(0, ...)` final.
+ */
 export function sumarImportes(importes: number[]): number {
   const total = importes.reduce(
-    (suma, importe) => suma + (esImporteValido(importe) ? importe : 0),
+    (suma, importe) => suma + (esImporteConSigno(importe) ? importe : 0),
     0,
   )
-  return Math.min(total, MAX_IMPORTE)
+  return Math.max(-MAX_IMPORTE, Math.min(total, MAX_IMPORTE))
 }
 
 /**
@@ -25,11 +32,12 @@ export function sumarImportes(importes: number[]): number {
  * había tecleado el usuario.
  */
 export function duplicarImporte(importe: number): number {
-  if (!esImporteValido(importe)) return 0
-  return Math.min(importe * 2, MAX_IMPORTE)
+  if (!esImporteConSigno(importe)) return 0
+  // Doblar un plato quemado dobla el descuento, que es lo que cabe esperar.
+  return Math.max(-MAX_IMPORTE, Math.min(importe * 2, MAX_IMPORTE))
 }
 
 /** Cuántas cartas se llevan sumadas. Sirve para la casilla del aumento. */
 export function cuentaDeSumandos(importes: number[]): number {
-  return importes.filter(esImporteValido).length
+  return importes.filter(esImporteConSigno).length
 }

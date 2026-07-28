@@ -12,6 +12,7 @@ import {
   derivar,
   estadosDePartida,
   parsearImporte,
+  parsearImporteConSigno,
   previsualizarRonda,
   puedeAumentar,
   sumarImportes,
@@ -91,7 +92,7 @@ export function CerrarRonda({ partida, rondaEditada, onAtras, onConfirmar }: Pro
     pagadorId && reparto
       ? {
           pagadorId,
-          totalCartas: parsearImporte(total) ?? 0,
+          totalCartas: parsearImporteConSigno(total) ?? 0,
           propina: parsearImporte(propina) ?? 0,
           reparto,
           aumentoMano: concedeAumento({
@@ -103,7 +104,9 @@ export function CerrarRonda({ partida, rondaEditada, onAtras, onConfirmar }: Pro
       : null
 
   const errores = borrador ? validarBorrador(partida, borrador) : ['Falta elegir quién pagó.']
-  const listo = borrador !== null && errores.length === 0 && total !== ''
+  // Un '-' a secas no es un importe: se exige que el total parsee de verdad.
+  const listo =
+    borrador !== null && errores.length === 0 && parsearImporteConSigno(total) !== null
 
   const vista = useMemo(() => {
     if (!borrador || !listo) return null
@@ -161,7 +164,9 @@ export function CerrarRonda({ partida, rondaEditada, onAtras, onConfirmar }: Pro
         <>
           {listo ? null : (
             <p className={estilos.aviso}>
-              {total === '' ? 'Falta el total de las cartas.' : errores[0]}
+              {parsearImporteConSigno(total) === null
+                ? 'Falta el total de las cartas.'
+                : errores[0]}
             </p>
           )}
           <Boton
@@ -193,8 +198,9 @@ export function CerrarRonda({ partida, rondaEditada, onAtras, onConfirmar }: Pro
           etiqueta="Total de las cartas"
           valor={total}
           onCambio={cambiarTotalAMano}
-          ayuda="Lo que suman los platos y bebidas de la mesa, ya con Premium y platos quemados aplicados."
+          ayuda="Lo que suman los platos y bebidas de la mesa. Puede salir negativo: los platos quemados restan."
           autoFocus={!editando}
+          permiteSigno
         />
         <Sumador importes={cartasSumadas} onCambio={cambiarSumadas} />
       </section>
@@ -304,7 +310,7 @@ export function CerrarRonda({ partida, rondaEditada, onAtras, onConfirmar }: Pro
                 : 'Al guardar se recalculan también las rondas posteriores'
           }
         >
-          <LineaTicket concepto="Cartas" importe={`${parsearImporte(total) ?? 0} €`} />
+          <LineaTicket concepto="Cartas" importe={`${parsearImporteConSigno(total) ?? 0} €`} />
           {(parsearImporte(propina) ?? 0) > 0 ? (
             <LineaTicket concepto="Propina" importe={`${parsearImporte(propina)} €`} />
           ) : null}

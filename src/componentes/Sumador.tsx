@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { duplicarImporte, parsearImporte, sumarImportes } from '../dominio/index.ts'
+import { duplicarImporte, parsearImporteConSigno, sumarImportes } from '../dominio/index.ts'
 import estilos from './Sumador.module.css'
 
 interface Props {
@@ -8,22 +8,29 @@ interface Props {
   onCambio: (importes: number[]) => void
 }
 
+/** Con el menos tipográfico, que el guion del teclado queda pobre en cifras. */
+function conSigno(valor: number): string {
+  return valor < 0 ? `−${Math.abs(valor)}` : String(valor)
+}
+
 /**
  * Suma las cartas de la mesa una a una.
  *
  * Teclado propio en vez del nativo del móvil: el del sistema tapa media
  * pantalla justo cuando hace falta ver el desglose, y aquí se necesitan
- * pulsables grandes para ir cantando cartas deprisa.
+ * pulsables grandes para ir cantando cartas deprisa. Tampoco trae un menos, y
+ * aquí hace falta: los platos quemados restan.
  *
  * No sabe cuánto vale ninguna tapa. El catálogo de cartas está fuera de
  * alcance a propósito, así que esto solo suma lo que se teclea.
  */
 export function Sumador({ importes, onCambio }: Props) {
   const [abierto, setAbierto] = useState(false)
-  const [entrada, setEntrada] = useState('')
+  const [digitos, setDigitos] = useState('')
+  const [negativo, setNegativo] = useState(false)
 
   const total = sumarImportes(importes)
-  const valorEntrada = parsearImporte(entrada)
+  const valorEntrada = parsearImporteConSigno(`${negativo ? '-' : ''}${digitos}`)
   const hayEntrada = valorEntrada !== null
 
   if (!abierto) {
@@ -36,8 +43,7 @@ export function Sumador({ importes, onCambio }: Props) {
   }
 
   function pulsarDigito(digito: string) {
-    setEntrada((actual) => {
-      // Sin ceros a la izquierda y con el mismo techo que el campo de importes.
+    setDigitos((actual) => {
       const siguiente = (actual + digito).replace(/^0+(?=\d)/, '')
       return siguiente.length > 5 ? actual : siguiente
     })
@@ -46,12 +52,15 @@ export function Sumador({ importes, onCambio }: Props) {
   function anadirCarta() {
     if (valorEntrada === null) return
     onCambio([...importes, valorEntrada])
-    setEntrada('')
+    setDigitos('')
+    setNegativo(false)
   }
 
   function doblarEntrada() {
     if (valorEntrada === null) return
-    setEntrada(String(duplicarImporte(valorEntrada)))
+    const doblado = duplicarImporte(valorEntrada)
+    setNegativo(doblado < 0)
+    setDigitos(String(Math.abs(doblado)))
   }
 
   function quitarCarta(indice: number) {
@@ -59,7 +68,8 @@ export function Sumador({ importes, onCambio }: Props) {
   }
 
   function cerrar() {
-    setEntrada('')
+    setDigitos('')
+    setNegativo(false)
     setAbierto(false)
   }
 
@@ -80,11 +90,13 @@ export function Sumador({ importes, onCambio }: Props) {
             <button
               key={`${indice}-${importe}`}
               type="button"
-              className={estilos.carta}
+              className={
+                importe < 0 ? `${estilos.carta} ${estilos.cartaNegativa}` : estilos.carta
+              }
               onClick={() => quitarCarta(indice)}
-              aria-label={`Quitar ${importe} euros`}
+              aria-label={`Quitar la carta de ${importe} euros`}
             >
-              {importe} €<span className={estilos.quitar} aria-hidden="true">×</span>
+              {conSigno(importe)} €<span className={estilos.quitar} aria-hidden="true">×</span>
             </button>
           ))
         )}
@@ -93,13 +105,17 @@ export function Sumador({ importes, onCambio }: Props) {
       <div className={estilos.pantalla}>
         <div>
           <div className={estilos.etiquetaPantalla}>Carta</div>
-          <div className={estilos.entrada}>{entrada === '' ? '0' : entrada}</div>
+          <div className={negativo ? `${estilos.entrada} ${estilos.entradaResta}` : estilos.entrada}>
+            {digitos === '' ? (negativo ? '−0' : '0') : conSigno(valorEntrada ?? 0)}
+          </div>
         </div>
         <div className={estilos.totalZona}>
           <div className={estilos.etiquetaPantalla}>
             Total · {importes.length} {importes.length === 1 ? 'carta' : 'cartas'}
           </div>
-          <div className={estilos.total}>{total} €</div>
+          <div className={total < 0 ? `${estilos.total} ${estilos.totalResta}` : estilos.total}>
+            {conSigno(total)} €
+          </div>
         </div>
       </div>
 
@@ -117,6 +133,30 @@ export function Sumador({ importes, onCambio }: Props) {
 
         <button
           type="button"
+          className={`${estilos.tecla} ${estilos.teclaSigno}`}
+          onClick={() => setNegativo((actual) => !actual)}
+          aria-label="Cambiar el signo, para los platos quemados"
+          aria-pressed={negativo}
+        >
+          ±
+        </button>
+        <button type="button" className={estilos.tecla} onClick={() => pulsarDigito('0')}>
+          0
+        </button>
+        <button
+          type="button"
+          className={`${estilos.tecla} ${estilos.teclaAuxiliar}`}
+          onClick={() => setDigitos((actual) => actual.slice(0, -1))}
+          disabled={digitos === ''}
+          aria-label="Borrar el último dígito"
+        >
+          ←
+        </button>
+      </div>
+
+      <div className={estilos.acciones}>
+        <button
+          type="button"
           className={`${estilos.tecla} ${estilos.teclaAuxiliar}`}
           onClick={doblarEntrada}
           disabled={!hayEntrada}
@@ -125,32 +165,19 @@ export function Sumador({ importes, onCambio }: Props) {
         >
           ×2
         </button>
-        <button type="button" className={estilos.tecla} onClick={() => pulsarDigito('0')}>
-          0
-        </button>
         <button
           type="button"
-          className={`${estilos.tecla} ${estilos.teclaAuxiliar}`}
-          onClick={() => setEntrada((actual) => actual.slice(0, -1))}
-          disabled={entrada === ''}
-          aria-label="Borrar el último dígito"
+          className={estilos.anadir}
+          onClick={anadirCarta}
+          disabled={!hayEntrada}
         >
-          ←
+          Añadir carta
         </button>
       </div>
 
-      <button
-        type="button"
-        className={estilos.anadir}
-        onClick={anadirCarta}
-        disabled={!hayEntrada}
-      >
-        Añadir carta
-      </button>
-
       <p className={estilos.pista}>
         Toca una carta ya sumada para quitarla. El total va directo al campo de arriba. Un plato
-        quemado va como <strong>0</strong>: no suma, pero cuenta como carta.
+        quemado va con <strong>±</strong>: resta, y cuenta como carta.
       </p>
     </section>
   )
