@@ -2,7 +2,7 @@
 
 Lo que está por hacer, con lo que cuesta cada cosa y lo que hay que decidir antes de tocar código. Ordenado de "se puede hacer ya" a "hay que decidir primero".
 
-Los no-negociables del proyecto están en el [README](README.md): offline-first, cero peticiones salientes, cero terceros, todo en el dispositivo. Dos de los puntos de abajo chocan con eso y van marcados.
+Los no-negociables del proyecto están en el [README](README.md): offline-first, cero peticiones salientes, cero terceros, todo en el dispositivo. Los puntos que chocan con eso van marcados, y los que dependen de algo externo dicen de qué.
 
 ---
 
@@ -71,7 +71,44 @@ No. Todo vive en el propio dispositivo y no hay ni una petición saliente. El pr
 
 ---
 
-## 3. Créditos
+## 3. Actualizaciones del PWA
+
+**Casi listo. Hay una decisión pequeña dentro.**
+
+Lo que ya funciona: el service worker versiona la caché con un **sha256 del contenido de todo `dist/`** (`plugin-sw.ts`), así que cualquier cambio en cualquier archivo produce una versión nueva y una caché nueva; las viejas se borran al activar. El worker nuevo **no toma el control por su cuenta**: espera a que el usuario acepte en el aviso, para no recargar a mitad de una ronda. Los assets de Vite ya van con hash de contenido en el nombre.
+
+Lo que falta:
+
+- **Nunca se comprueba activamente si hay versión nueva.** No se llama a `registration.update()` en ningún sitio, así que se depende de cuándo lo mire el navegador por su cuenta (en una navegación, o cada 24 h). Un móvil con la app instalada y abierta días puede no enterarse. Arreglo: llamar a `update()` al volver a primer plano (`visibilitychange`), con un intervalo mínimo entre comprobaciones para no machacar.
+- **La app no sabe qué versión corre.** El `VERSION` vive solo dentro del worker. Exponerlo —vía `postMessage` o cacheándolo— y enseñarlo en la pantalla de "Acerca de" hace depurable un fallo en una terraza: "¿qué versión tienes?" es la primera pregunta.
+- **Aceptar la actualización a mitad del formulario pierde lo tecleado.** El estado de "Cerrar ronda" —total, propina, cartas del sumador— es estado de React, no está persistido. Si alguien va por la quinta carta y pulsa *Actualizar*, se recarga y lo pierde. No auto-recargamos nunca, así que el encargo se respeta, pero el pie del usuario sigue ahí. **Decisión:** o el aviso se calla mientras el formulario está a medias, o avisa de lo que se va a perder, o se persiste el borrador. Lo primero es lo más simple y probablemente suficiente.
+- El aviso descartado con *Ahora no* no vuelve a salir en esa sesión. Reaparece al recargar, porque el worker sigue esperando. Es aceptable, pero conviene tenerlo escrito.
+
+Archivos: `src/pwa/registro.ts`, `src/componentes/AvisoActualizacion.tsx`, `src/sw/sw.ts`.
+
+---
+
+## 4. Invitación a instalar, en Android y en iOS
+
+**Listo para hacer, con una restricción de plataforma que no se puede sortear.**
+
+Hoy **no hay nada**: si alguien no sabe que esto se puede instalar, se queda usándolo en una pestaña. El encargo pedía "sin prompt de instalación intrusivo. Un acceso discreto", así que el objetivo es un acceso discreto, no un modal al primer arranque.
+
+Son dos implementaciones distintas porque las plataformas no se parecen:
+
+- **Android / Chromium.** Hay API: se captura el evento `beforeinstallprompt`, se guarda, y se enseña un botón propio que llama a `prompt()` cuando el usuario quiera. El navegador solo dispara ese evento si la PWA cumple los criterios de instalabilidad, que ya se cumplen (manifiesto, service worker, HTTPS).
+- **iOS / Safari.** **No hay API.** `beforeinstallprompt` no existe y no se puede provocar el diálogo. Lo único posible es explicar el gesto: *Compartir → Añadir a pantalla de inicio*, con el icono de compartir dibujado para que se reconozca. Es una instrucción, no un botón.
+
+Detalles a respetar:
+
+- **No enseñarlo si ya está instalada.** `window.matchMedia('(display-mode: standalone)')` cubre Android y, en iOS, `navigator.standalone`.
+- **Recordar que se descartó**, y no volver a insistir. En `localStorage` como el tema, que no es estado de partida.
+- Sin modales al arrancar. Un botón discreto en el inicio, y como mucho una tira que se pueda cerrar.
+- El icono de compartir de iOS hay que dibujarlo como SVG en el código: no se puede tirar de una fuente de iconos, y menos de una remota.
+
+---
+
+## 5. Créditos
 
 **Aplazado a propósito. Queda anotado aquí y no se toca por ahora.**
 
@@ -88,7 +125,7 @@ La licencia del repositorio iba en este punto, pero se sale a su propio apartado
 
 ---
 
-## 4. El manual del juego dentro de la app
+## 6. El manual del juego dentro de la app
 
 **Hay que decidir qué texto, y hay un asunto de derechos.**
 
@@ -104,7 +141,7 @@ Mi recomendación: empezar por un **resumen propio de las reglas que el marcador
 
 ---
 
-## 5. Publicidad
+## 7. Publicidad
 
 **Choca de frente con cuatro de los no-negociables. Hace falta una decisión consciente.**
 
@@ -129,18 +166,31 @@ Una opción intermedia si lo que se busca es sostener el proyecto: un enlace de 
 
 ---
 
-## 6. Licencia del repositorio
+## 8. Reconocimiento de cartas por foto
+
+**Bloqueado a la espera de fotos reales. Sin ellas no se puede decidir.**
+
+La idea es fotografiar las cartas de la mesa y que la app sume. Decidido ya: **todo en el dispositivo** (nada de API de visión, que rompería el offline y la privacidad) y el motor como **descarga opcional**, para que la app base siga pesando medio mega e instalándose con el wifi malo de un bar.
+
+Lo medido, no estimado a ojo:
+
+| Pieza | Peso |
+|---|---|
+| `tesseract-core-simd-lstm.wasm` | 2,8 MB |
+| `eng.traineddata` (variante `best_int`, comprimida) | 2,8 MB |
+| Glue de tesseract.js | ~0,1 MB |
+
+Unos **5,7 MB**. Y hay margen para bajarlo bastante: si los precios son un puñado de cifras con tipografía fija, se puede recortar el `traineddata` a solo dígitos, o entrenar un clasificador de glifos que cabría **por debajo de 1 MB** y sería más preciso que un OCR general, porque el problema es mucho más pequeño que "leer texto arbitrario".
+
+**Qué falta para decidir:** una foto real de una mesa con cartas jugadas, hecha con el móvil y con la luz que hay de verdad. Y otra con mala luz, que es el caso que importa: si funciona a mediodía pero no en una terraza de noche, no sirve. Lo que hay que mirar en ellas: cuántos píxeles ocupa el precio, si hay brillos del plástico, cuánto se solapan las cartas y si la cifra es limpia o decorativa. Esas cuatro cosas deciden entre OCR general, clasificador propio o descartarlo.
+
+**Sin prisa:** el sumador manual ya resuelve el problema de fondo, que era sumar. Esto es comodidad, no necesidad.
+
+---
+
+## 9. Licencia del repositorio
 
 **Hecho, con un seguimiento pendiente.** El código es propietario, todos los derechos reservados: ver [LICENSE](LICENSE). Autor, Arnaldo Alberto Quintero Segura; explotación comercial prevista, Shiroo Innovation Group S.L.
-
-### Al quedar la sociedad inscrita
-
-**Shiroo Innovation Group S.L. está en constitución**, así que hoy no tiene personalidad jurídica ni CIF y no puede ser titular de derechos. El aviso está redactado en consecuencia: copyright del autor como persona física, sociedad como destinataria prevista de los derechos de explotación. Cuando se inscriba hay dos cosas que hacer:
-
-- Actualizar `LICENSE` con la denominación definitiva y el CIF.
-- Formalizar **por escrito** la cesión de los derechos de explotación del autor a la sociedad. En España las cesiones de derechos de explotación se hacen por escrito, y sin ese documento la titularidad se queda donde está por mucho que lo diga un archivo del repositorio.
-
-Nada de esto es asesoramiento jurídico: es la lista de lo que queda por atar.
 
 Los avisos de terceros están en [TERCEROS.md](TERCEROS.md), con los textos copiados de los archivos de licencia de cada paquete. Queda un fleco menor anotado allí: el aviso de copyright de **Source Sans 3** viene del proyecto original y no del archivo que servimos, porque el subset de Google Fonts trae la tabla de nombres eliminada. Falta cotejar el rango de años exacto.
 
@@ -148,10 +198,24 @@ Recordatorio de por qué no se pone el repositorio en privado: **GitHub Pages en
 
 ---
 
+## 10. Titularidad, al constituirse Shiroo Innovation Group S.L.
+
+**Disparador: la inscripción de la sociedad en el Registro Mercantil.**
+
+Hoy la sociedad está en constitución: no tiene personalidad jurídica propia ni CIF, así que **no puede ser todavía titular de derechos**. Por eso el `LICENSE` pone el copyright a nombre del autor como persona física, con la sociedad citada como destinataria prevista de la explotación comercial. Está redactado así a propósito, no por descuido.
+
+Cuando quede inscrita, dos cosas:
+
+1. **Actualizar `LICENSE`** con la denominación definitiva y el CIF. Y el `README`, que repite el dato.
+2. **Formalizar por escrito la cesión de los derechos de explotación** del autor a la sociedad. Esto es lo que de verdad mueve la titularidad: en España la cesión de derechos de explotación se hace por escrito, y **sin ese documento los derechos se quedan donde están**, por mucho que un archivo del repositorio diga otra cosa. Cambiar el `LICENSE` sin firmar la cesión deja un aviso que no se sostiene.
+
+Nada de esto es asesoramiento jurídico: es la lista de lo que queda por atar. El documento de cesión merece que lo revise quien lleve la constitución de la sociedad.
+
+---
+
 ## Sin decidir, de antes
 
 Vienen del encargo original y siguen abiertas. Están explicadas en el [README](README.md).
 
-- **Reconocimiento de cartas por foto.** A la espera de fotos reales de una mesa para poder decir si el OCR en el dispositivo es viable. El motor pesaría unos 5,7 MB y se plantea como descarga opcional para no engordar la app base.
 - **¿La propina puede ser negativa?** Ahora se valida como no negativa, asumiendo que siempre es el precio de una tapa. Si en el juego hay algún caso en que reste, es un cambio de una línea.
 - **A pachas sin el pagador.** Nada impide desmarcar a quien pidió la cuenta. Se deja pasar a propósito.

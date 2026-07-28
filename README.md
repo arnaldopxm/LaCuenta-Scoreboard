@@ -233,7 +233,7 @@ Sin emojis en la interfaz. Los iconos son SVG dibujados a mano en el propio cód
 
 ## Qué queda por hacer
 
-En [PENDIENTES.md](PENDIENTES.md): tocar una ficha para doblarla, dudas frecuentes dentro de la app, créditos, el manual del juego y el asunto de la publicidad, que choca de frente con los no-negociables y necesita una decisión consciente.
+En [PENDIENTES.md](PENDIENTES.md), ordenado de "se puede hacer ya" a "hay que decidir antes": tocar una ficha para doblarla, dudas frecuentes dentro de la app, comprobación activa de actualizaciones, invitación a instalar en Android e iOS, créditos, el manual del juego, el reconocimiento de cartas por foto y el asunto de la publicidad, que choca de frente con los no-negociables y necesita una decisión consciente.
 
 ---
 
