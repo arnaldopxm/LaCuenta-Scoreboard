@@ -218,4 +218,5 @@ Nada de esto es asesoramiento jurídico: es la lista de lo que queda por atar. E
 Vienen del encargo original y siguen abiertas. Están explicadas en el [README](README.md).
 
 - **¿La propina puede ser negativa?** Ahora se valida como no negativa, asumiendo que siempre es el precio de una tapa. Si en el juego hay algún caso en que reste, es un cambio de una línea.
+- **Cada push a una rama con PR abierto lanza CI dos veces**, una por el evento `push` y otra por `pull_request`. Es desperdicio de minutos, no un fallo: las dos pasan. Se arregla acotando los disparadores, pero cambia qué se comprueba en qué ramas, así que mejor decidirlo con calma.
 - **A pachas sin el pagador.** Nada impide desmarcar a quien pidió la cuenta. Se deja pasar a propósito.
