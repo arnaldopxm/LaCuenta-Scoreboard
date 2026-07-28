@@ -25,12 +25,12 @@ npm run preview      # sirve dist/ como en producción
 ## Cómo pasar los tests
 
 ```bash
-npm test             # los 146 tests del dominio y la persistencia
+npm test             # los 164 tests del dominio, la persistencia y el PWA
 npm run test:watch
 npm run typecheck    # app y service worker, cada uno con su tsconfig
 ```
 
-Los tests del dominio corren en entorno `node` y no renderizan nada. Los de persistencia usan `fake-indexeddb`.
+Los tests del dominio corren en entorno `node` y no renderizan nada. Los de persistencia usan `fake-indexeddb`. Los del PWA cubren las dos piezas del flujo de actualización que son lógica pura: cada cuánto se comprueba si hay versión nueva y el bus que decide si el aviso puede salir. Lo demás del flujo necesita un navegador y dos versiones, y para eso está la verificación de más abajo.
 
 ### Verificación offline real
 
@@ -40,12 +40,14 @@ npm run verificar:offline
 
 Levanta un servidor estático con `dist/`, abre Chromium, instala el service worker, juega una partida, **corta la red del navegador**, recarga y comprueba que todo siga en pie. También vigila que no salga ni una petición fuera del origen.
 
-Las catorce comprobaciones que hace:
+Las dieciséis comprobaciones que hace:
 
 | Comprobación | Qué verifica |
 |---|---|
 | El service worker toma el control | Registro correcto |
 | Precache poblado | Los 16 recursos del shell, avisos legales incluidos |
+| La versión que se enseña es la del worker | El `postMessage` de versión, ya en la primera carga |
+| El aumento de mano viene marcado por defecto | El caso normal no cuesta ningún toque |
 | Previsualización con redondeo al alza | 141 € entre 4 → 36 € cada uno |
 | Ahorros aplicados al marcador | El fold de rondas llega a la pantalla |
 | Aumento de mano concedido solo al pagador | El co-pagador no sube |
@@ -60,6 +62,23 @@ Las catorce comprobaciones que hace:
 | Sin errores de JavaScript | Incluidas violaciones de CSP |
 
 Si el entorno tiene otro Chromium, se le pasa con `CHROMIUM_BIN=/ruta/al/chrome`.
+
+### Verificación del flujo de actualización
+
+```bash
+npm run verificar:actualizacion
+```
+
+Lo que no se puede comprobar de ninguna otra forma: hace falta una versión instalada, otra publicada después y un navegador que note el cambio. El script copia `dist/` dos veces, cambia en la segunda copia el `VERSION` del worker y un texto del bundle —un `sw.js` distinto byte a byte es justo lo que hace que el navegador vea un worker nuevo— y sirve primero una y luego la otra.
+
+Las diecisiete comprobaciones, en cuatro tramos:
+
+| Tramo | Qué verifica |
+|---|---|
+| Versión A instalada | La versión sale ya en la primera carga y no hay aviso si no hay nada nuevo |
+| Se publica la B | El aviso aparece, y nada se recarga por su cuenta |
+| Formulario a medias | Al teclear, el aviso se calla; al confirmar o salir, vuelve |
+| El usuario acepta | Corre la B, el bundle servido es el nuevo, la partida sobrevive, queda una sola caché y arranca sin red |
 
 ## Scripts de mantenimiento
 
@@ -78,7 +97,7 @@ Cada push a `main` pasa por CI y, si todo está en verde, publica en **GitHub Pa
 
 <https://arnaldopxm.github.io/LaCuenta-Scoreboard/>
 
-El trabajo se hace en ramas y entra por pull request; `main` es lo que hay publicado. El workflow (`.github/workflows/desplegar.yml`) corre tests, auditoría de dependencias, build y **la verificación offline completa con Chromium** en cualquier rama y en cada PR, pero solo publica desde `main`. La rama de publicación está fijada por nombre y no a "la rama por defecto": lo que sale a internet no debería cambiar porque alguien toque un ajuste del repositorio. La verificación se ejecuta con `--subruta`, porque Pages sirve el proyecto en `/LaCuenta-Scoreboard/` y no en la raíz del dominio: es exactamente lo que se despliega lo que se comprueba.
+El trabajo se hace en ramas y entra por pull request; `main` es lo que hay publicado. El workflow (`.github/workflows/desplegar.yml`) corre tests, auditoría de dependencias, build y **las dos verificaciones con Chromium —la offline y la del flujo de actualización—** en cualquier rama y en cada PR, pero solo publica desde `main`. La rama de publicación está fijada por nombre y no a "la rama por defecto": lo que sale a internet no debería cambiar porque alguien toque un ajuste del repositorio. La verificación se ejecuta con `--subruta`, porque Pages sirve el proyecto en `/LaCuenta-Scoreboard/` y no en la raíz del dominio: es exactamente lo que se despliega lo que se comprueba.
 
 **Activación, una sola vez:** en *Ajustes → Pages → Build and deployment → Source*, elegir **GitHub Actions**. Crear el sitio de Pages es administración del repositorio, y el `GITHUB_TOKEN` de Actions no puede hacerlo por mucho `pages: write` que se le dé. A partir de ahí no hay que volver a tocar nada: cada push despliega solo.
 
@@ -140,7 +159,7 @@ src/
 ├─ componentes/     Cartucho, Pizarra, Ticket, FilaJugador, controles
 ├─ estilos/         tokens.css (paleta y modo oscuro) y base.css
 ├─ fuentes/         los .woff2, dentro del bundle
-├─ pwa/             registro del service worker y aviso de actualización
+├─ pwa/             registro del worker, comprobación de versión y aviso
 └─ sw/              el service worker, con su propio tsconfig
 ```
 
@@ -181,6 +200,26 @@ La propina se suma **antes** del recorte a cero. Con las cartas en −20 y una p
 Las reglas oficiales dicen que la partida acaba cuando a alguien "se le acaban los ahorros", pero no aclaran qué pasa si la cuenta supera lo que ese jugador tiene. Aquí se asume **clamp a 0, sin deuda negativa**, y eso dispara el fin de partida.
 
 Esa decisión está aislada en `src/dominio/aplicarPago.ts`, en una función de una línea. Si algún día se decide otra cosa —deuda negativa, o que el resto cubra la diferencia— se cambia ahí y ni el reparto, ni la derivación de estado, ni la detección de fin de partida se enteran.
+
+### El aumento de mano se da por hecho
+
+La regla del +1 al límite de mano tiene dos condiciones —que se jugaran al menos tantas cartas como jugadores, y que quien pidió la cuenta lo quiera— y el marcador **no ve la mesa**, así que las dos las confirma el usuario.
+
+Eran dos casillas, y la segunda estaba deshabilitada hasta marcar la primera: el caso normal costaba dos toques en un orden concreto. Ahora es **una sola casilla, marcada por defecto**. Quien se pone a contar las cartas es porque quiere el aumento, y la mayoría de rondas llegan al mínimo.
+
+El precio de ese defecto es que el marcador asume algo que no ha visto, así que se dice en el subtexto: *"Se jugaron N cartas o más y Fulano pasa de 5 a 6. Si no llegaron, desmárcalo"*, con el recuento del sumador como pista cuando lo hay. En el tope de 10 cartas la casilla se deshabilita, y al corregir una ronda pasada manda lo que se guardó, no el defecto.
+
+La regla sigue teniendo sus dos condiciones separadas en `concedeAumento` (`src/dominio/reglas.ts`), que es donde le corresponde estar: lo que se ha juntado es la forma de preguntarlo, no la regla.
+
+### La app nunca se recarga sola
+
+Un service worker nuevo **no toma el control por su cuenta**: se instala, precachea el shell y espera. La app avisa con una tira discreta y solo recarga si el usuario pulsa *Actualizar*. Recargar por sorpresa a alguien que va por la quinta carta de la cuenta es perder el trabajo de la ronda, y en una mesa de bar eso significa discutir cuánto pagaba cada uno.
+
+Tres cosas van con esa regla:
+
+- **Se comprueba activamente**, al volver a primer plano, con un mínimo de 15 minutos entre comprobaciones (`src/pwa/ritmoComprobacion.ts`). Sin esto se depende de cuándo lo mire el navegador por su cuenta, que en una app instalada y nunca cerrada puede ser días.
+- **Con un formulario a medias el aviso se calla.** Lo tecleado en "Cerrar ronda" o en "Nueva partida" no está persistido, así que mientras haya algo escrito el aviso no sale; vuelve al confirmar o al salir. Nada se pierde por esperar: el worker nuevo aguanta su turno indefinidamente.
+- **La versión se enseña en el inicio.** Es un sha256 del contenido de todo `dist/` y vive dentro del worker, que la contesta por `postMessage`. "¿Qué versión tienes?" es la primera pregunta cuando algo va raro en una terraza.
 
 ---
 
@@ -235,7 +274,7 @@ Sin emojis en la interfaz. Los iconos son SVG dibujados a mano en el propio cód
 
 ## Qué queda por hacer
 
-En [PENDIENTES.md](PENDIENTES.md), ordenado de "se puede hacer ya" a "hay que decidir antes": tocar una ficha para doblarla, dudas frecuentes dentro de la app, comprobación activa de actualizaciones, invitación a instalar en Android e iOS, créditos, el manual del juego, el reconocimiento de cartas por foto y el asunto de la publicidad, que choca de frente con los no-negociables y necesita una decisión consciente.
+En [PENDIENTES.md](PENDIENTES.md), ordenado de "se puede hacer ya" a "hay que decidir antes": tocar una ficha para doblarla, dudas frecuentes dentro de la app, invitación a instalar en Android e iOS, créditos, el manual del juego, el reconocimiento de cartas por foto y el asunto de la publicidad, que choca de frente con los no-negociables y necesita una decisión consciente. Las actualizaciones del PWA ya están hechas; queda anotado allí un fleco de maquetación del aviso.
 
 ---
 
@@ -254,6 +293,8 @@ En [PENDIENTES.md](PENDIENTES.md), ordenado de "se puede hacer ya" a "hay que de
 - **Rondas posteriores al fin de partida.** Estuvieron un tiempo aplicándose. Ahora la derivación para en seco al llegar el fin y las rondas de después quedan anuladas pero visibles, no borradas. Ver "La partida se para en seco al llegar el fin".
 
 - **Botón físico de atrás.** La navegación arrancó siendo estado interno sin historial, así que en Android el atrás cerraba la app. Ahora hay una pila sincronizada con la History API y funciona; sigue sin haber URLs, que no hacían falta.
+
+- **Qué hacer si llega una actualización con el formulario a medias.** Había tres salidas: callar el aviso, avisar de lo que se va a perder o persistir el borrador. Se eligió callarlo, que es la más simple y no obliga a explicar nada al usuario. Ver "La app nunca se recarga sola".
 
 ---
 

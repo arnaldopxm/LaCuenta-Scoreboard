@@ -131,6 +131,21 @@ const cacheado = await pagina.evaluate(async () => {
 })
 comprobar('Precache poblado', cacheado >= 10, `${cacheado} recursos`)
 
+/*
+ * La versión vive dentro del worker y la app la pregunta por postMessage. Que la
+ * pintada coincida con el nombre de la caché prueba el viaje entero, y que salga
+ * ya en la PRIMERA carga prueba que se espera al worker en vez de rendirse
+ * cuando todavía no hay controlador.
+ */
+await pagina.waitForSelector('text=Versión', { timeout: 15000 }).catch(() => null)
+const versionPintada = (await texto()).match(/Versión\s+([0-9a-f]+)/)?.[1] ?? null
+const nombreCache = (await pagina.evaluate(() => caches.keys()))[0]
+comprobar(
+  'La versión que se enseña es la del worker que sirve',
+  versionPintada !== null && nombreCache === `la-cuenta-${versionPintada}`,
+  versionPintada ? `${versionPintada} · caché ${nombreCache}` : 'no se pinta ninguna versión',
+)
+
 // Se juega una partida entera para que haya algo que sobreviva al corte.
 await pagina.getByRole('button', { name: 'Nueva partida' }).click()
 await pagina.getByRole('radio', { name: '5' }).click()
@@ -145,9 +160,15 @@ await pagina.getByLabel('Total de las cartas').fill('137')
 await pagina.getByLabel('Propina').fill('4')
 await pagina.getByRole('radio', { name: /A pachas/ }).click()
 await pagina.getByRole('checkbox', { name: 'Jugador 4' }).click()
-await pagina.getByRole('checkbox', { name: /Se jugaron al menos 5 cartas/ }).click()
-await pagina.getByRole('checkbox', { name: /\+1 al límite de mano/ }).click()
 await pagina.waitForSelector('text=Previsualización')
+
+// El aumento de mano es una sola casilla y viene marcada: el caso normal no
+// cuesta ningún toque. Si esto se rompe, el +1 de más abajo tampoco se concede.
+const casillaAumento = pagina.getByRole('checkbox', { name: /\+1 al límite de mano/ })
+comprobar(
+  'El aumento de mano viene marcado por defecto',
+  (await casillaAumento.getAttribute('aria-checked')) === 'true',
+)
 if (CAPTURAS) await pagina.screenshot({ path: 'capturas/04-cerrar-ronda.png', fullPage: true })
 
 const previsualizacion = await texto()

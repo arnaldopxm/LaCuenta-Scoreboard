@@ -65,3 +65,12 @@
   color: var(--tinta);
   opacity: 0.85;
 }
+
+/* Discreta a propósito: se busca cuando hace falta, no se lee de paso. */
+.version {
+  margin-top: calc(var(--esp-l) * -1);
+  text-align: center;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  color: var(--tinta-tenue);
+}

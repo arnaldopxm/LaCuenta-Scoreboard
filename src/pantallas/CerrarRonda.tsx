@@ -11,6 +11,7 @@ import {
   cuentaDeSumandos,
   derivar,
   estadosDePartida,
+  limiteMano,
   parsearImporte,
   parsearImporteConSigno,
   previsualizarRonda,
@@ -23,6 +24,7 @@ import {
   type Ronda,
   type TipoReparto,
 } from '../dominio/index.ts'
+import { useSinInterrupciones } from '../pwa/useSinInterrupciones.ts'
 import estilos from './CerrarRonda.module.css'
 
 interface Props {
@@ -66,9 +68,39 @@ export function CerrarRonda({ partida, rondaEditada, onAtras, onConfirmar }: Pro
    */
   const [cartasSumadas, setCartasSumadas] = useState<number[]>([])
 
-  // Al corregir una ronda que ya daba aumento, es que el mínimo se cumplió.
-  const [minimoCartas, setMinimoCartas] = useState(rondaEditada?.aumentoMano ?? false)
-  const [quiereAumento, setQuiereAumento] = useState(rondaEditada?.aumentoMano ?? false)
+  /**
+   * Una sola casilla para el aumento de mano, marcada por defecto.
+   *
+   * Eran dos —"se jugaron al menos N cartas" y "+1 al límite de mano"— y en la
+   * mesa se marcaban siempre juntas: quien se pone a contar las cartas es porque
+   * quiere el aumento. Además la segunda estaba deshabilitada hasta marcar la
+   * primera, así que el caso normal costaba dos toques en un orden concreto.
+   *
+   * Marcada por defecto porque la mayoría de rondas llegan al mínimo. El
+   * marcador sigue sin ver la mesa: si no llegaron, se desmarca. Al corregir una
+   * ronda pasada manda lo que se guardó, no el defecto.
+   */
+  const [subeLaMano, setSubeLaMano] = useState(rondaEditada?.aumentoMano ?? true)
+
+  /*
+   * Firma de todo lo que hay en el formulario, para saber si está a medias.
+   * Comparada con la de la primera pintada distingue "recién abierto" —al
+   * corregir, los campos vienen rellenos y no hay nada que perder— de "el
+   * usuario ha tecleado algo". Mientras difieran, el aviso de actualización se
+   * calla: aceptarlo recarga la página y esto no está persistido.
+   */
+  const firma = JSON.stringify([
+    pagadorId,
+    total,
+    propina,
+    tipo,
+    coPagadorId,
+    participantes,
+    cartasSumadas,
+    subeLaMano,
+  ])
+  const [firmaAlAbrir] = useState(firma)
+  useSinInterrupciones(firma !== firmaAlAbrir)
 
   /**
    * Al corregir una ronda pasada, la previsualización enseña cómo queda la mesa
@@ -96,8 +128,11 @@ export function CerrarRonda({ partida, rondaEditada, onAtras, onConfirmar }: Pro
           propina: parsearImporte(propina) ?? 0,
           reparto,
           aumentoMano: concedeAumento({
-            minimoCartasConfirmado: minimoCartas,
-            solicitado: quiereAumento,
+            // La casilla confirma las dos condiciones de un tirón: que se
+            // jugaron cartas suficientes y que se quiere el +1. La regla sigue
+            // teniéndolas separadas, que es donde le corresponde estar.
+            minimoCartasConfirmado: subeLaMano,
+            solicitado: subeLaMano,
             aumentosActuales: aumentosDelPagador,
           }),
         }
@@ -270,28 +305,21 @@ export function CerrarRonda({ partida, rondaEditada, onAtras, onConfirmar }: Pro
         <h2 className={estilos.subtitulo}>Aumento de mano</h2>
         <div className={estilos.casillas}>
           <Casilla
-            marcada={minimoCartas}
-            onCambio={setMinimoCartas}
-            // Pista, no decisión: la app no ve la mesa, así que el dato lo
-            // sigue confirmando quien está jugando.
-            subtexto={
-              cartasSumadas.length > 0
-                ? `En el sumador llevas ${cuentaDeSumandos(cartasSumadas)}.`
-                : undefined
-            }
-          >
-            {`Se jugaron al menos ${partida.jugadores.length} cartas`}
-          </Casilla>
-          <Casilla
-            marcada={quiereAumento && minimoCartas && !enTopeDeMano}
-            onCambio={setQuiereAumento}
-            disabled={!minimoCartas || enTopeDeMano || pagadorId === null}
+            marcada={subeLaMano && !enTopeDeMano}
+            onCambio={setSubeLaMano}
+            // En el tope de 10 cartas no hay nada que marcar. Sin pagador
+            // elegido sí se puede desmarcar: la ronda es la misma, y el pagador
+            // solo dice quién recibe el aumento.
+            disabled={enTopeDeMano}
             subtexto={motivoDelAumento({
-              minimoCartas,
+              marcada: subeLaMano,
               enTopeDeMano,
-              hayPagador: pagadorId !== null,
-              nombre: pagadorId ? nombreDe(pagadorId) : '',
-              limiteActual: 5 + aumentosDelPagador,
+              nombre: pagadorId ? nombreDe(pagadorId) : null,
+              limiteActual: limiteMano(aumentosDelPagador),
+              minimoCartas: partida.jugadores.length,
+              // Pista, no decisión: la app no ve la mesa, así que las cartas las
+              // sigue confirmando quien está jugando.
+              cartasEnSumador: cartasSumadas.length > 0 ? cuentaDeSumandos(cartasSumadas) : null,
             })}
           >
             +1 al límite de mano
@@ -406,17 +434,32 @@ function construirReparto(
   }
 }
 
+/**
+ * Lo que explica la casilla del aumento. Ahora es una sola, y viene marcada, así
+ * que el subtexto tiene que dejar claro qué se está dando por hecho y cómo
+ * quitarlo.
+ */
 function motivoDelAumento(opciones: {
-  minimoCartas: boolean
+  marcada: boolean
   enTopeDeMano: boolean
-  hayPagador: boolean
-  nombre: string
+  nombre: string | null
   limiteActual: number
+  minimoCartas: number
+  cartasEnSumador: number | null
 }): string {
-  if (!opciones.hayPagador) return 'Elige antes quién pidió la cuenta.'
+  const quien = opciones.nombre ?? 'quien pidió la cuenta'
+
   if (opciones.enTopeDeMano) {
-    return `${opciones.nombre} ya está en el tope de ${LIMITE_MANO_MAX} cartas.`
+    return `${quien} ya está en el tope de ${LIMITE_MANO_MAX} cartas.`
   }
-  if (!opciones.minimoCartas) return 'Solo si se jugaron cartas suficientes.'
-  return `${opciones.nombre} pasaría de ${opciones.limiteActual} a ${opciones.limiteActual + 1} cartas.`
+  if (!opciones.marcada) {
+    return `Sin aumento: ${quien} se queda en ${opciones.limiteActual} cartas.`
+  }
+
+  const pista =
+    opciones.cartasEnSumador === null ? '' : ` En el sumador llevas ${opciones.cartasEnSumador}.`
+  return (
+    `Se jugaron ${opciones.minimoCartas} cartas o más y ${quien} pasa de ` +
+    `${opciones.limiteActual} a ${opciones.limiteActual + 1}. Si no llegaron, desmárcalo.${pista}`
+  )
 }

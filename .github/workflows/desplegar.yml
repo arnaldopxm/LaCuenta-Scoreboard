@@ -28,7 +28,7 @@ concurrency:
 
 jobs:
   comprobar:
-    name: Tests y verificación offline
+    name: Tests y verificaciones con navegador
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -62,6 +62,12 @@ jobs:
         # Con --subruta, porque Pages sirve el proyecto en /LaCuenta-Scoreboard/
         # y no en la raíz del dominio: es el caso que de verdad se despliega.
         run: node scripts/verificar-offline.mjs --subruta
+
+      - name: Verificación del flujo de actualización
+        # Instala una versión, publica otra y comprueba el aviso, el silencio
+        # con el formulario a medias y la recarga solo cuando el usuario acepta.
+        # Usa el dist/ del paso de compilar; no vuelve a compilar.
+        run: node scripts/verificar-actualizacion.mjs
 
       - name: Preparar artefacto de Pages
         if: github.ref_name == 'main'

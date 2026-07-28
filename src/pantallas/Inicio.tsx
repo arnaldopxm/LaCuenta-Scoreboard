@@ -6,12 +6,21 @@ import estilos from './Inicio.module.css'
 interface Props {
   partida: Partida | null
   numTerminadas: number
+  /** Versión que sirve el service worker, o null si aún no se sabe. */
+  version: string | null
   onContinuar: () => void
   onNueva: () => void
   onHistorial: () => void
 }
 
-export function Inicio({ partida, numTerminadas, onContinuar, onNueva, onHistorial }: Props) {
+export function Inicio({
+  partida,
+  numTerminadas,
+  version,
+  onContinuar,
+  onNueva,
+  onHistorial,
+}: Props) {
   return (
     <div className={estilos.inicio}>
       <header className={estilos.rotulo}>
@@ -47,6 +56,17 @@ export function Inicio({ partida, numTerminadas, onContinuar, onNueva, onHistori
             : `Historial (${numTerminadas} ${numTerminadas === 1 ? 'partida' : 'partidas'})`}
         </Boton>
       </div>
+
+      {/*
+        La versión, en pequeño. No es decoración: es lo primero que hay que
+        preguntar cuando algo va raro en una terraza. En desarrollo no hay
+        service worker que la sirva, así que no sale nada.
+      */}
+      {version ? (
+        <p className={estilos.version}>
+          Versión <span className="cifra">{version}</span>
+        </p>
+      ) : null}
     </div>
   )
 }

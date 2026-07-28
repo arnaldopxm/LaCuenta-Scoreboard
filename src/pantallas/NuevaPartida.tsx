@@ -11,6 +11,7 @@ import {
   sanearNombre,
   validarNombres,
 } from '../dominio/index.ts'
+import { useSinInterrupciones } from '../pwa/useSinInterrupciones.ts'
 import estilos from './NuevaPartida.module.css'
 
 interface Props {
@@ -30,6 +31,12 @@ export function NuevaPartida({ onAtras, onCrear }: Props) {
   const enJuego = nombres.slice(0, cantidad)
   const error = validarNombres(enJuego)
   const ahorros = ahorrosIniciales(cantidad)
+
+  // Ocho nombres tecleados también se pierden con una recarga: mientras haya
+  // algo cambiado, el aviso de actualización se calla. Ver `CerrarRonda`.
+  const firma = JSON.stringify([cantidad, nombres])
+  const [firmaAlAbrir] = useState(firma)
+  useSinInterrupciones(firma !== firmaAlAbrir)
 
   function cambiarNombre(indice: number, valor: string) {
     setNombres((actuales) => actuales.map((n, i) => (i === indice ? valor : n)))

@@ -10,6 +10,7 @@ import { HistorialRondas } from './pantallas/HistorialRondas.tsx'
 import { Inicio } from './pantallas/Inicio.tsx'
 import { Marcador } from './pantallas/Marcador.tsx'
 import { NuevaPartida } from './pantallas/NuevaPartida.tsx'
+import { useVersion } from './pwa/useVersion.ts'
 import estilos from './App.module.css'
 
 /**
@@ -31,6 +32,7 @@ export function App() {
   const control = usePartida()
   const { alternar, oscuro } = useTema()
   const { vista, ir, volver, reemplazar, reiniciar } = useNavegacion<Vista>(INICIO)
+  const version = useVersion()
 
   const { partida, terminadas, cargando, errorGuardado } = control
 
@@ -59,6 +61,7 @@ export function App() {
       <Inicio
         partida={partida}
         numTerminadas={terminadas.length}
+        version={version}
         onContinuar={() => ir({ nombre: 'marcador' })}
         onNueva={() => ir({ nombre: 'nueva' })}
         onHistorial={() => ir({ nombre: 'archivo' })}
