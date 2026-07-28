@@ -131,27 +131,11 @@ Una opción intermedia si lo que se busca es sostener el proyecto: un enlace de 
 
 ## 6. Licencia del repositorio
 
-**Pequeño, pero tiene efecto desde hoy.**
+**Hecho.** El código es propietario, todos los derechos reservados: ver [LICENSE](LICENSE).
 
-El repositorio es público y está desplegado, y **no lleva ninguna licencia**. Sin archivo de licencia lo que aplica por defecto es "todos los derechos reservados": legalmente nadie puede usarlo, copiarlo ni contribuir, aunque el código esté a la vista.
+Los avisos de terceros están en [TERCEROS.md](TERCEROS.md), con los textos copiados de los archivos de licencia de cada paquete. Queda un fleco menor anotado allí: el aviso de copyright de **Source Sans 3** viene del proyecto original y no del archivo que servimos, porque el subset de Google Fonts trae la tabla de nombres eliminada. Falta cotejar el rango de años exacto.
 
-Si la intención es **código propietario**, sin licencia ya se consigue en términos de copyright: por defecto son todos los derechos reservados. Lo único que conviene añadir es un aviso explícito, porque en GitHub la ausencia de archivo de licencia se lee muy a menudo como "esto se puede usar".
-
-Ojo con una cosa antes de pensar en poner el repositorio en privado: **GitHub Pages en plan gratuito exige que el repositorio sea público.** Ponerlo privado tumba el despliegue actual salvo que se pase a un plan de pago.
-
-### Avisos de terceros: esto no es opcional
-
-Independientemente de la licencia que se elija para el código propio, las dependencias traen las suyas y **hay que cumplirlas también en una app propietaria**:
-
-- **React** — MIT. Obliga a conservar el aviso de copyright y el texto de la licencia.
-- **Dexie** — Apache-2.0. Igual, más su propio aviso.
-- **Alfa Slab One, Source Sans 3, Courier Prime** — SIL OFL 1.1. La licencia tiene que acompañar a los archivos de fuente, y la OFL además restringe el uso de los Reserved Font Names en versiones modificadas.
-
-Falta por tanto un archivo de avisos de terceros (`TERCEROS.md` o equivalente) con esos textos. Es lo único de este apartado que es una obligación y no una elección.
-
-Y una que no cubre ninguna licencia: ser propietario del código no da ningún derecho sobre **La Cuenta** como juego. Ahí lo que importa es la línea de "herramienta no oficial" del punto de créditos, no la licencia.
-
-Lo de elegir licencia no lo decido yo porque no me corresponde.
+Recordatorio de por qué no se pone el repositorio en privado: **GitHub Pages en plan gratuito exige repositorio público.** Privado tumbaría el despliegue salvo pasar a plan de pago.
 
 ---
 

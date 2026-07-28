@@ -23,6 +23,6 @@
     "allowImportingTsExtensions": true,
     "noEmit": true
   },
-  "include": ["src", "vite.config.ts", "plugin-sw.ts", "plugin-csp.ts"],
+  "include": ["src", "vite.config.ts", "plugin-sw.ts", "plugin-csp.ts", "plugin-avisos.ts"],
   "exclude": ["src/sw"]
 }

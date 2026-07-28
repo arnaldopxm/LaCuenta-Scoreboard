@@ -45,7 +45,7 @@ Las catorce comprobaciones que hace:
 | Comprobación | Qué verifica |
 |---|---|
 | El service worker toma el control | Registro correcto |
-| Precache poblado | Los 14 recursos del shell |
+| Precache poblado | Los 16 recursos del shell, avisos legales incluidos |
 | Previsualización con redondeo al alza | 141 € entre 4 → 36 € cada uno |
 | Ahorros aplicados al marcador | El fold de rondas llega a la pantalla |
 | Aumento de mano concedido solo al pagador | El co-pagador no sube |
@@ -113,7 +113,7 @@ El plan original usaba `vite-plugin-pwa`. Al instalarlo aparecieron **8 CVEs hig
 - `vite-plugin-pwa@1.2.0`, que es lo que sugiere `npm audit fix`, **no soporta Vite 8**.
 - El problema no es de una versión concreta: **todas las versiones de `workbox-build` arrastran algún `rollup-plugin-off-main-thread` que depende de `ejs 3.x`**.
 
-Así que el service worker está escrito a mano (`src/sw/sw.ts`, ~100 líneas) más un plugin de build de ~60 (`plugin-sw.ts`). Para una app que precachea su shell entero y no habla con ningún servidor, Workbox no aportaba nada que compensara ocho CVEs.
+Así que el service worker está escrito a mano (`src/sw/sw.ts`, ~100 líneas) más un plugin de build de ~60 (`plugin-sw.ts`). Hay dos plugins propios más, igual de pequeños: `plugin-csp.ts` calcula el hash del script en línea para la CSP, y `plugin-avisos.ts` copia `LICENSE` y `TERCEROS.md` al bundle, porque la OFL exige que la licencia acompañe a los archivos de fuente que se distribuyen. Para una app que precachea su shell entero y no habla con ningún servidor, Workbox no aportaba nada que compensara ocho CVEs.
 
 ---
 
@@ -179,6 +179,16 @@ La propina se suma **antes** del recorte a cero. Con las cartas en −20 y una p
 Las reglas oficiales dicen que la partida acaba cuando a alguien "se le acaban los ahorros", pero no aclaran qué pasa si la cuenta supera lo que ese jugador tiene. Aquí se asume **clamp a 0, sin deuda negativa**, y eso dispara el fin de partida.
 
 Esa decisión está aislada en `src/dominio/aplicarPago.ts`, en una función de una línea. Si algún día se decide otra cosa —deuda negativa, o que el resto cubra la diferencia— se cambia ahí y ni el reparto, ni la derivación de estado, ni la detección de fin de partida se enteran.
+
+---
+
+## Licencia
+
+Código propietario, todos los derechos reservados: [LICENSE](LICENSE).
+
+El repositorio es público para que el código pueda leerse, pero no es software libre. Los componentes de terceros mantienen sus propias licencias —React y Vitest MIT, Dexie y TypeScript Apache-2.0, las tres tipografías SIL OFL 1.1— y los avisos completos están en [TERCEROS.md](TERCEROS.md).
+
+**La Cuenta** es un juego de 2Tomatoes Games. Esta app es una herramienta no oficial de aficionado, sin relación con la editorial, y no incluye arte ni reglamento del juego.
 
 ---
 
