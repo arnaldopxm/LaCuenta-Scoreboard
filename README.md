@@ -40,13 +40,14 @@ npm run verificar:offline
 
 Levanta un servidor estático con `dist/`, abre Chromium, instala el service worker, juega una partida, **corta la red del navegador**, recarga y comprueba que todo siga en pie. También vigila que no salga ni una petición fuera del origen.
 
-Las dieciséis comprobaciones que hace:
+Las diecinueve comprobaciones que hace:
 
 | Comprobación | Qué verifica |
 |---|---|
 | El service worker toma el control | Registro correcto |
 | Precache poblado | Los 16 recursos del shell, avisos legales incluidos |
 | La versión que se enseña es la del worker | El `postMessage` de versión, ya en la primera carga |
+| El tema se cambia desde el inicio | Sin partida abierta, fuera del marcador |
 | El aumento de mano viene marcado por defecto | El caso normal no cuesta ningún toque |
 | Previsualización con redondeo al alza | 141 € entre 4 → 36 € cada uno |
 | Ahorros aplicados al marcador | El fold de rondas llega a la pantalla |
@@ -56,6 +57,8 @@ Las dieciséis comprobaciones que hace:
 | Atrás desde el historial vuelve al marcador | Desapilado completo |
 | Guardar una corrección devuelve al historial | Confirmar sale por donde se entró |
 | La app arranca en modo avión | Recarga sin red |
+| El tema elegido sobrevive a recargar sin red | Lo aplica el script en línea antes de pintar |
+| El botón de tema está en todas las pantallas | Las seis del recorrido |
 | La partida y la corrección sobreviven sin red | IndexedDB persiste |
 | Navegación servida desde caché | Arranque en frío sin red |
 | Cero peticiones fuera del origen | Ni fuentes, ni iconos, ni telemetría |
@@ -153,7 +156,8 @@ src/
 │   ├─ validacion.ts        importes enteros y saneado de nombres
 │   └─ __tests__/           los catorce casos obligatorios, uno a uno
 ├─ persistencia/    Dexie y repositorio de partidas
-├─ estado/          el puente con React: usePartida, useTema, useNavegacion
+├─ estado/          el puente con React: usePartida, useNavegacion, y el
+│                   tema (tema.ts fuera de React, useTema para pintarlo)
 ├─ pantallas/       Inicio, NuevaPartida, Marcador, CerrarRonda,
 │                   HistorialRondas, FinPartida, HistorialPartidas
 ├─ componentes/     Cartucho, Pizarra, Ticket, FilaJugador, controles
@@ -259,7 +263,7 @@ Réplica de la identidad de la caja y el reglamento: fondo naranja con textura d
 
 - **El ticket** es un ticket: monoespaciada, columnas alineadas con puntos suspensivos y bordes dentados.
 - **La pizarra negra** se usa con el mismo código semántico que el juego. En La Cuenta, las cartas que solo se juegan *después* de pedir la cuenta (Propina, A medias, A pachas) son negras sobre pizarra; en la app, esos controles van sobre fondo pizarra.
-- **El modo oscuro** no oscurece la paleta cálida: se construye sobre esa misma pizarra. Sigue la preferencia del sistema y hay interruptor manual en el marcador. **El ticket sigue siendo papel crema** en oscuro: es el objeto físico de la mesa y no se invierte.
+- **El modo oscuro** no oscurece la paleta cálida: se construye sobre esa misma pizarra. Sigue la preferencia del sistema y hay interruptor manual **en todas las pantallas**, en la cabecera. Estuvo un tiempo solo dentro de una partida, que es justo donde no se busca: se busca al abrir la app de noche. La preferencia vive en un almacén de módulo (`estado/tema.ts`) en vez de en un `useState` por pantalla, para que el botón sea el mismo en todas. **El ticket sigue siendo papel crema** en oscuro: es el objeto físico de la mesa y no se invierte.
 
 Tipografías, todas SIL OFL y servidas desde el bundle:
 

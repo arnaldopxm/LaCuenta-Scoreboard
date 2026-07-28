@@ -1,0 +1,18 @@
+/* Mismo pulsable que el botón de volver: 48 px y la misma carta de papel. */
+.tema {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: var(--toque-min);
+  height: var(--toque-min);
+  border: 2px solid var(--borde-fuerte);
+  border-radius: var(--radio-m);
+  background: var(--superficie);
+  color: var(--tinta);
+  box-shadow: var(--sombra-carta);
+}
+
+.tema:active {
+  transform: translateY(2px);
+  box-shadow: none;
+}

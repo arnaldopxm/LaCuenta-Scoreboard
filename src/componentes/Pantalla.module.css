@@ -51,12 +51,6 @@
   min-width: 0;
 }
 
-.acciones {
-  flex: 0 0 auto;
-  display: flex;
-  gap: var(--esp-s);
-}
-
 .contenido {
   flex: 1;
   display: flex;

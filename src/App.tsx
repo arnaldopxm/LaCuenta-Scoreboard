@@ -2,7 +2,6 @@ import { AvisoActualizacion } from './componentes/AvisoActualizacion.tsx'
 import type { BorradorRonda } from './dominio/index.ts'
 import { useNavegacion } from './estado/useNavegacion.ts'
 import { usePartida } from './estado/usePartida.ts'
-import { useTema } from './estado/useTema.ts'
 import { CerrarRonda } from './pantallas/CerrarRonda.tsx'
 import { FinPartida } from './pantallas/FinPartida.tsx'
 import { HistorialPartidas } from './pantallas/HistorialPartidas.tsx'
@@ -30,7 +29,6 @@ const INICIO: Vista = { nombre: 'inicio' }
 
 export function App() {
   const control = usePartida()
-  const { alternar, oscuro } = useTema()
   const { vista, ir, volver, reemplazar, reiniciar } = useNavegacion<Vista>(INICIO)
   const version = useVersion()
 
@@ -162,8 +160,6 @@ export function App() {
         return (
           <Marcador
             partida={partida}
-            oscuro={oscuro}
-            onAlternarTema={alternar}
             onCerrarRonda={() => ir({ nombre: 'cerrar' })}
             onHistorial={() => ir({ nombre: 'rondas' })}
             onDeshacer={() => void control.deshacer()}
