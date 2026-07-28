@@ -13,7 +13,6 @@ interface CampoNumeroProps {
   onCambio: (texto: string) => void
   ayuda?: ReactNode
   enPizarra?: boolean
-  autoFocus?: boolean
   /**
    * Deja meter importes negativos. Solo para el total de las cartas: los platos
    * quemados restan. La propina no lo lleva, que un precio no es negativo.
@@ -21,13 +20,20 @@ interface CampoNumeroProps {
   permiteSigno?: boolean
 }
 
+/**
+ * Ojo: aquí no hay `autoFocus` a propósito.
+ *
+ * "Cerrar ronda" abría con el foco en el total, y el teclado del móvil se
+ * comía media pantalla antes de tocar nada: el primer paso de la pantalla es
+ * elegir quién pidió la cuenta, y eso quedaba tapado. El teclado sale cuando el
+ * usuario toca el campo, no al entrar.
+ */
 export function CampoNumero({
   etiqueta,
   valor,
   onCambio,
   ayuda,
   enPizarra = false,
-  autoFocus = false,
   permiteSigno = false,
 }: CampoNumeroProps) {
   const id = useId()
@@ -68,7 +74,6 @@ export function CampoNumero({
           pattern="[0-9]*"
           autoComplete="off"
           value={valor}
-          autoFocus={autoFocus}
           onChange={(evento) => onCambio(limpiar(evento.target.value))}
           onFocus={(evento) => evento.target.select()}
         />

@@ -234,7 +234,6 @@ export function CerrarRonda({ partida, rondaEditada, onAtras, onConfirmar }: Pro
           valor={total}
           onCambio={cambiarTotalAMano}
           ayuda="Lo que suman los platos y bebidas de la mesa. Puede salir negativo: los platos quemados restan."
-          autoFocus={!editando}
           permiteSigno
         />
         <Sumador importes={cartasSumadas} onCambio={cambiarSumadas} />

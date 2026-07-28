@@ -169,6 +169,23 @@ await pagina.waitForSelector('text=Ronda 1')
 await aviso.waitFor({ state: 'visible', timeout: 5000 })
 comprobar('Creada la partida, el aviso vuelve', true)
 
+/*
+ * El aviso está fijo abajo, justo donde el pie de las pantallas ancla la acción
+ * primaria. Tapaba el botón, y quien tuviera una actualización esperando no podía
+ * pulsarlo sin descartar el aviso primero. Se mira a mano con `elementFromPoint`
+ * en vez de fiarse de que el click de abajo falle: así el fallo dice qué pasa.
+ */
+const pieDestapado = await pagina.evaluate(() => {
+  const boton = [...document.querySelectorAll('button')].find(
+    (candidato) => candidato.textContent?.trim() === 'Cerrar ronda',
+  )
+  if (!boton) return false
+  const caja = boton.getBoundingClientRect()
+  const encima = document.elementFromPoint(caja.left + caja.width / 2, caja.top + caja.height / 2)
+  return encima !== null && boton.contains(encima)
+})
+comprobar('Con el aviso a la vista, el botón del pie no queda tapado', pieDestapado)
+
 console.log('\n· Y con un borrador de ronda, igual\n')
 await pagina.getByRole('button', { name: 'Cerrar ronda' }).click()
 await pagina.waitForSelector('text=¿Quién pidió la cuenta?')

@@ -71,13 +71,13 @@ npm run verificar:actualizacion
 
 Lo que no se puede comprobar de ninguna otra forma: hace falta una versión instalada, otra publicada después y un navegador que note el cambio. El script copia `dist/` dos veces, cambia en la segunda copia el `VERSION` del worker y un texto del bundle —un `sw.js` distinto byte a byte es justo lo que hace que el navegador vea un worker nuevo— y sirve primero una y luego la otra.
 
-Las diecisiete comprobaciones, en cuatro tramos:
+Las dieciocho comprobaciones, en cuatro tramos:
 
 | Tramo | Qué verifica |
 |---|---|
 | Versión A instalada | La versión sale ya en la primera carga y no hay aviso si no hay nada nuevo |
 | Se publica la B | El aviso aparece, y nada se recarga por su cuenta |
-| Formulario a medias | Al teclear, el aviso se calla; al confirmar o salir, vuelve |
+| Formulario a medias | Al teclear, el aviso se calla; al confirmar o salir, vuelve. Y con el aviso a la vista, el botón del pie no queda tapado |
 | El usuario acepta | Corre la B, el bundle servido es el nuevo, la partida sobrevive, queda una sola caché y arranca sin red |
 
 ## Scripts de mantenimiento
@@ -220,6 +220,7 @@ Tres cosas van con esa regla:
 - **Se comprueba activamente**, al volver a primer plano, con un mínimo de 15 minutos entre comprobaciones (`src/pwa/ritmoComprobacion.ts`). Sin esto se depende de cuándo lo mire el navegador por su cuenta, que en una app instalada y nunca cerrada puede ser días.
 - **Con un formulario a medias el aviso se calla.** Lo tecleado en "Cerrar ronda" o en "Nueva partida" no está persistido, así que mientras haya algo escrito el aviso no sale; vuelve al confirmar o al salir. Nada se pierde por esperar: el worker nuevo aguanta su turno indefinidamente.
 - **La versión se enseña en el inicio.** Es un sha256 del contenido de todo `dist/` y vive dentro del worker, que la contesta por `postMessage`. "¿Qué versión tienes?" es la primera pregunta cuando algo va raro en una terraza.
+- **El aviso no tapa nada.** Está fijo abajo, donde también está el pie con la acción primaria, así que se mide y publica su alto en `--alto-aviso`; el pie y el inicio le dejan ese hueco. Y sus dos botones usan colores que no cambian con el tema, porque el aviso es una pizarra oscura en modo claro y en oscuro.
 
 ---
 
