@@ -219,6 +219,12 @@ Sin emojis en la interfaz. Los iconos son SVG dibujados a mano en el propio cód
 
 ---
 
+## Qué queda por hacer
+
+En [PENDIENTES.md](PENDIENTES.md): tocar una ficha para doblarla, dudas frecuentes dentro de la app, créditos, el manual del juego y el asunto de la publicidad, que choca de frente con los no-negociables y necesita una decisión consciente.
+
+---
+
 ## Decisiones que quedaron abiertas
 
 1. **De dónde sale un importe negativo.** Las reglas lo contemplan pero no explican el caso. Se cubre con un `max(0, …)` defensivo: si la cuenta sale negativa, no paga nadie.
