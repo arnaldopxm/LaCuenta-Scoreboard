@@ -73,17 +73,18 @@ No. Todo vive en el propio dispositivo y no hay ni una petición saliente. El pr
 
 ## 3. Créditos
 
-**Falta un dato tuyo.**
+**Aplazado a propósito. Queda anotado aquí y no se toca por ahora.**
 
-Qué debería llevar:
+Cuando se retome, esto es lo que debería llevar:
 
 - Autoría de la app. **Hace falta decidir cómo quieres aparecer**: nombre, alias, enlace a GitHub o a donde sea.
 - Crédito del juego, que ya está en el README: **La Cuenta**, de 2Tomatoes Games, diseñado por Litus Carreras y Ariadna Altimira.
 - Una línea dejando claro que **esto es una herramienta no oficial de aficionado**, sin relación con la editorial. Es lo honesto y evita malentendidos si la app circula.
 - Licencias de las tipografías, las tres SIL OFL 1.1 (Alfa Slab One, Source Sans 3, Courier Prime).
-- Si el repositorio va a llevar licencia, decidir cuál. Ahora no tiene ninguna, lo que técnicamente significa "todos los derechos reservados".
 
 Sitio natural: al final de la pantalla de inicio o en una pantalla de "Acerca de" junto a las dudas frecuentes.
+
+La licencia del repositorio iba en este punto, pero se sale a su propio apartado más abajo: no es una cuestión de créditos y tiene efecto ya.
 
 ---
 
@@ -125,6 +126,18 @@ Y el cálculo práctico no ayuda: una PWA personal con un puñado de usuarios ge
 Una opción intermedia si lo que se busca es sostener el proyecto: un enlace de apoyo (invitar a un café), que solo sale a la red **si alguien lo pulsa**. Sin rastreo y sin peso.
 
 **Decisión pendiente:** patrocinio estático, enlace de apoyo, las dos, o abrir la mano y asumir el coste de romper el offline y la privacidad. Si es lo último, que sea a sabiendas y no por deslizamiento.
+
+---
+
+## 6. Licencia del repositorio
+
+**Pequeño, pero tiene efecto desde hoy.**
+
+El repositorio es público y está desplegado, y **no lleva ninguna licencia**. Sin archivo de licencia lo que aplica por defecto es "todos los derechos reservados": legalmente nadie puede usarlo, copiarlo ni contribuir, aunque el código esté a la vista.
+
+Si la intención es que sea un proyecto personal y nada más, se puede dejar tal cual — pero conviene que sea a sabiendas. Si se quiere que alguien pueda mirarlo, forkearlo o mandar un arreglo, hace falta elegir una (MIT y Apache-2.0 son las de siempre para algo así) y añadir el archivo.
+
+No lo he decidido yo porque no me corresponde.
 
 ---
 
