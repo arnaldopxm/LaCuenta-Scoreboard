@@ -25,6 +25,13 @@ const CACHE = `la-cuenta-${VERSION}`
 /** Mensaje que manda la app cuando el usuario acepta actualizar. */
 const SALTAR_ESPERA = 'la-cuenta:saltar-espera'
 
+/**
+ * Mensaje con el que la app pregunta qué versión está sirviendo. La versión es
+ * un hash del contenido de `dist/` y solo existe aquí dentro, así que el bundle
+ * no puede saberla por su cuenta: tiene que preguntarla.
+ */
+const PEDIR_VERSION = 'la-cuenta:version'
+
 trabajador.addEventListener('install', (evento) => {
   evento.waitUntil(
     (async () => {
@@ -52,7 +59,19 @@ trabajador.addEventListener('activate', (evento) => {
 })
 
 trabajador.addEventListener('message', (evento) => {
-  if (evento.data === SALTAR_ESPERA) void trabajador.skipWaiting()
+  if (evento.data === SALTAR_ESPERA) {
+    void trabajador.skipWaiting()
+    return
+  }
+
+  /*
+   * Se contesta por el puerto que venga en el propio mensaje, no a todos los
+   * clientes: así quien pregunta recibe la versión de ESTE worker y no la de
+   * otro que ande esperando su turno.
+   */
+  if (evento.data === PEDIR_VERSION) {
+    evento.ports[0]?.postMessage({ tipo: PEDIR_VERSION, version: VERSION })
+  }
 })
 
 trabajador.addEventListener('fetch', (evento) => {

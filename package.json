@@ -15,6 +15,7 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.sw.json",
     "verificar:offline": "npm run build && node scripts/verificar-offline.mjs",
+    "verificar:actualizacion": "npm run build && node scripts/verificar-actualizacion.mjs",
     "iconos": "node scripts/generar-iconos.mjs",
     "fuentes": "node scripts/bajar-fuentes.mjs src/fuentes"
   },

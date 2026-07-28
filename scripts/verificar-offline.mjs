@@ -131,6 +131,21 @@ const cacheado = await pagina.evaluate(async () => {
 })
 comprobar('Precache poblado', cacheado >= 10, `${cacheado} recursos`)
 
+/*
+ * La versión vive dentro del worker y la app la pregunta por postMessage. Que la
+ * pintada coincida con el nombre de la caché prueba el viaje entero, y que salga
+ * ya en la PRIMERA carga prueba que se espera al worker en vez de rendirse
+ * cuando todavía no hay controlador.
+ */
+await pagina.waitForSelector('text=Versión', { timeout: 15000 }).catch(() => null)
+const versionPintada = (await texto()).match(/Versión\s+([0-9a-f]+)/)?.[1] ?? null
+const nombreCache = (await pagina.evaluate(() => caches.keys()))[0]
+comprobar(
+  'La versión que se enseña es la del worker que sirve',
+  versionPintada !== null && nombreCache === `la-cuenta-${versionPintada}`,
+  versionPintada ? `${versionPintada} · caché ${nombreCache}` : 'no se pinta ninguna versión',
+)
+
 // Se juega una partida entera para que haya algo que sobreviva al corte.
 await pagina.getByRole('button', { name: 'Nueva partida' }).click()
 await pagina.getByRole('radio', { name: '5' }).click()

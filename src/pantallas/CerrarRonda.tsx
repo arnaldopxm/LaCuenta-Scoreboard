@@ -23,6 +23,7 @@ import {
   type Ronda,
   type TipoReparto,
 } from '../dominio/index.ts'
+import { useSinInterrupciones } from '../pwa/useSinInterrupciones.ts'
 import estilos from './CerrarRonda.module.css'
 
 interface Props {
@@ -69,6 +70,27 @@ export function CerrarRonda({ partida, rondaEditada, onAtras, onConfirmar }: Pro
   // Al corregir una ronda que ya daba aumento, es que el mínimo se cumplió.
   const [minimoCartas, setMinimoCartas] = useState(rondaEditada?.aumentoMano ?? false)
   const [quiereAumento, setQuiereAumento] = useState(rondaEditada?.aumentoMano ?? false)
+
+  /*
+   * Firma de todo lo que hay en el formulario, para saber si está a medias.
+   * Comparada con la de la primera pintada distingue "recién abierto" —al
+   * corregir, los campos vienen rellenos y no hay nada que perder— de "el
+   * usuario ha tecleado algo". Mientras difieran, el aviso de actualización se
+   * calla: aceptarlo recarga la página y esto no está persistido.
+   */
+  const firma = JSON.stringify([
+    pagadorId,
+    total,
+    propina,
+    tipo,
+    coPagadorId,
+    participantes,
+    cartasSumadas,
+    minimoCartas,
+    quiereAumento,
+  ])
+  const [firmaAlAbrir] = useState(firma)
+  useSinInterrupciones(firma !== firmaAlAbrir)
 
   /**
    * Al corregir una ronda pasada, la previsualización enseña cómo queda la mesa

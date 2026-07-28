@@ -1,17 +1,22 @@
-import { useEffect, useState } from 'react'
-import { alHaberActualizacion } from '../pwa/estadoActualizacion.ts'
+import { useState, useSyncExternalStore } from 'react'
+import { actualizacionPendiente, suscribirseAlAviso } from '../pwa/estadoActualizacion.ts'
 import { Boton } from './Boton.tsx'
 import estilos from './AvisoActualizacion.module.css'
 
 /**
  * Aviso discreto de versión nueva. Nunca recarga por su cuenta: la decisión es
  * del usuario, que puede estar a mitad de una ronda.
+ *
+ * Dos silencios, los dos a propósito:
+ *
+ *   - Mientras una pantalla tenga un formulario a medias, el aviso no sale (ver
+ *     `estadoActualizacion.ts`). Aparece en cuanto se confirma o se sale.
+ *   - Descartado con "Ahora no", no vuelve a salir en esta sesión. Reaparece al
+ *     recargar, porque el worker nuevo sigue esperando su turno.
  */
 export function AvisoActualizacion() {
-  const [aplicar, setAplicar] = useState<(() => void) | null>(null)
+  const aplicar = useSyncExternalStore(suscribirseAlAviso, actualizacionPendiente)
   const [descartado, setDescartado] = useState(false)
-
-  useEffect(() => alHaberActualizacion((accion) => setAplicar(() => accion)), [])
 
   if (!aplicar || descartado) return null
 

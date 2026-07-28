@@ -1,6 +1,6 @@
 # Pendientes
 
-Lo que está por hacer, con lo que cuesta cada cosa y lo que hay que decidir antes de tocar código. Ordenado de "se puede hacer ya" a "hay que decidir primero".
+Lo que está por hacer, con lo que cuesta cada cosa y lo que hay que decidir antes de tocar código. Ordenado de "se puede hacer ya" a "hay que decidir primero". Los puntos ya resueltos se quedan con su número y su historia en vez de desaparecer: explican por qué la app hace lo que hace.
 
 Los no-negociables del proyecto están en el [README](README.md): offline-first, cero peticiones salientes, cero terceros, todo en el dispositivo. Los puntos que chocan con eso van marcados, y los que dependen de algo externo dicen de qué.
 
@@ -73,18 +73,30 @@ No. Todo vive en el propio dispositivo y no hay ni una petición saliente. El pr
 
 ## 3. Actualizaciones del PWA
 
-**Casi listo. Hay una decisión pequeña dentro.**
+**Hecho, con un fleco de maquetación anotado abajo.**
 
-Lo que ya funciona: el service worker versiona la caché con un **sha256 del contenido de todo `dist/`** (`plugin-sw.ts`), así que cualquier cambio en cualquier archivo produce una versión nueva y una caché nueva; las viejas se borran al activar. El worker nuevo **no toma el control por su cuenta**: espera a que el usuario acepte en el aviso, para no recargar a mitad de una ronda. Los assets de Vite ya van con hash de contenido en el nombre.
+Lo que ya venía funcionando: el service worker versiona la caché con un **sha256 del contenido de todo `dist/`** (`plugin-sw.ts`), así que cualquier cambio en cualquier archivo produce una versión nueva y una caché nueva; las viejas se borran al activar. El worker nuevo **no toma el control por su cuenta**: espera a que el usuario acepte en el aviso, para no recargar a mitad de una ronda. Los assets de Vite ya van con hash de contenido en el nombre.
 
-Lo que falta:
+Lo que se ha añadido:
 
-- **Nunca se comprueba activamente si hay versión nueva.** No se llama a `registration.update()` en ningún sitio, así que se depende de cuándo lo mire el navegador por su cuenta (en una navegación, o cada 24 h). Un móvil con la app instalada y abierta días puede no enterarse. Arreglo: llamar a `update()` al volver a primer plano (`visibilitychange`), con un intervalo mínimo entre comprobaciones para no machacar.
-- **La app no sabe qué versión corre.** El `VERSION` vive solo dentro del worker. Exponerlo —vía `postMessage` o cacheándolo— y enseñarlo en la pantalla de "Acerca de" hace depurable un fallo en una terraza: "¿qué versión tienes?" es la primera pregunta.
-- **Aceptar la actualización a mitad del formulario pierde lo tecleado.** El estado de "Cerrar ronda" —total, propina, cartas del sumador— es estado de React, no está persistido. Si alguien va por la quinta carta y pulsa *Actualizar*, se recarga y lo pierde. No auto-recargamos nunca, así que el encargo se respeta, pero el pie del usuario sigue ahí. **Decisión:** o el aviso se calla mientras el formulario está a medias, o avisa de lo que se va a perder, o se persiste el borrador. Lo primero es lo más simple y probablemente suficiente.
-- El aviso descartado con *Ahora no* no vuelve a salir en esa sesión. Reaparece al recargar, porque el worker sigue esperando. Es aceptable, pero conviene tenerlo escrito.
+- **Comprobación activa al volver a primer plano.** Se llama a `registration.update()` en `visibilitychange`, con un **mínimo de 15 minutos** entre comprobaciones para no pedir `sw.js` a cada tirón de pantalla. Antes se dependía de cuándo lo mirara el navegador por su cuenta —en una navegación, o cada 24 h—, y un móvil con la app instalada y abierta días podía no enterarse nunca. El mínimo vive en `src/pwa/ritmoComprobacion.ts`, sin tocar el DOM, para poder probarlo. Sin red `update()` rechaza, que es el caso normal en el bar: se ignora y se vuelve a intentar a la siguiente.
+- **La app ya sabe qué versión corre.** El worker contesta a un `postMessage` con su `VERSION`, respondiendo por el puerto del propio mensaje para que no conteste otro worker que ande esperando turno. Se enseña en pequeño al final del inicio: "¿qué versión tienes?" es la primera pregunta cuando algo falla en una terraza. En la primera visita se espera al worker a que reclame los clientes, porque si no la versión no saldría hasta la carga siguiente.
+- **El aviso se calla mientras un formulario está a medias.** Era la decisión que quedaba abierta, y se ha tomado la primera de las tres opciones: callarse, en vez de avisar de lo que se va a perder o persistir el borrador. Vale para "Cerrar ronda" y para "Nueva partida", donde también se pierden ocho nombres tecleados. Cada pantalla compara una firma de sus campos con la de la primera pintada: así "recién abierto" —al corregir una ronda los campos vienen rellenos y no hay nada que perder— no se confunde con "el usuario ha tecleado algo". Nada se pierde por callarse: el worker nuevo espera su turno indefinidamente y el aviso vuelve al confirmar o al salir.
+- El aviso descartado con *Ahora no* sigue sin volver a salir en esa sesión. Reaparece al recargar, porque el worker sigue esperando. Queda como estaba, ahora escrito en el propio componente.
 
-Archivos: `src/pwa/registro.ts`, `src/componentes/AvisoActualizacion.tsx`, `src/sw/sw.ts`.
+Todo esto se comprueba con dos versiones de verdad y un Chromium real:
+
+```bash
+npm run verificar:actualizacion
+```
+
+Instala la versión A, publica la B, y mira que el aviso salga, que nada se recargue sin permiso, que el formulario a medias lo silencie y lo devuelva, y que al aceptar quede corriendo la B con una sola caché viva. Diecisiete comprobaciones. El ritmo de comprobación y el bus del aviso tienen además tests unitarios (`src/pwa/__tests__/`).
+
+**El fleco:** el aviso está fijo abajo (`position: fixed`) y el pie de las pantallas está pegado abajo también (`position: sticky`), así que **el aviso tapa el botón de acción primaria** —*Empezar*, *Confirmar ronda*—. Viene de antes, no de este cambio, y ahora molesta menos porque al teclear el aviso se calla y deja el botón libre; pero con el formulario recién abierto y sin tocar, el botón está debajo del aviso. Arreglarlo es decidir dónde vive el aviso: arriba taparía el botón de volver, y reservarle sitio abajo obliga a medir su altura y pasarla al pie como variable CSS. Es una decisión de maquetación, no de versionado, y por eso se anota en vez de resolverse aquí.
+
+Nota de sitio: la versión se enseña en el inicio y no en una pantalla de "Acerca de" porque esa pantalla todavía no existe. Cuando se hagan las dudas frecuentes (punto 2) o los créditos (punto 5), es su sitio natural.
+
+Archivos: `src/pwa/registro.ts`, `src/pwa/ritmoComprobacion.ts`, `src/pwa/estadoActualizacion.ts`, `src/pwa/useSinInterrupciones.ts`, `src/pwa/useVersion.ts`, `src/componentes/AvisoActualizacion.tsx`, `src/sw/sw.ts`, `scripts/verificar-actualizacion.mjs`.
 
 ---
 
