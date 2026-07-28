@@ -40,13 +40,14 @@ npm run verificar:offline
 
 Levanta un servidor estático con `dist/`, abre Chromium, instala el service worker, juega una partida, **corta la red del navegador**, recarga y comprueba que todo siga en pie. También vigila que no salga ni una petición fuera del origen.
 
-Las quince comprobaciones que hace:
+Las dieciséis comprobaciones que hace:
 
 | Comprobación | Qué verifica |
 |---|---|
 | El service worker toma el control | Registro correcto |
 | Precache poblado | Los 16 recursos del shell, avisos legales incluidos |
 | La versión que se enseña es la del worker | El `postMessage` de versión, ya en la primera carga |
+| El aumento de mano viene marcado por defecto | El caso normal no cuesta ningún toque |
 | Previsualización con redondeo al alza | 141 € entre 4 → 36 € cada uno |
 | Ahorros aplicados al marcador | El fold de rondas llega a la pantalla |
 | Aumento de mano concedido solo al pagador | El co-pagador no sube |
@@ -199,6 +200,16 @@ La propina se suma **antes** del recorte a cero. Con las cartas en −20 y una p
 Las reglas oficiales dicen que la partida acaba cuando a alguien "se le acaban los ahorros", pero no aclaran qué pasa si la cuenta supera lo que ese jugador tiene. Aquí se asume **clamp a 0, sin deuda negativa**, y eso dispara el fin de partida.
 
 Esa decisión está aislada en `src/dominio/aplicarPago.ts`, en una función de una línea. Si algún día se decide otra cosa —deuda negativa, o que el resto cubra la diferencia— se cambia ahí y ni el reparto, ni la derivación de estado, ni la detección de fin de partida se enteran.
+
+### El aumento de mano se da por hecho
+
+La regla del +1 al límite de mano tiene dos condiciones —que se jugaran al menos tantas cartas como jugadores, y que quien pidió la cuenta lo quiera— y el marcador **no ve la mesa**, así que las dos las confirma el usuario.
+
+Eran dos casillas, y la segunda estaba deshabilitada hasta marcar la primera: el caso normal costaba dos toques en un orden concreto. Ahora es **una sola casilla, marcada por defecto**. Quien se pone a contar las cartas es porque quiere el aumento, y la mayoría de rondas llegan al mínimo.
+
+El precio de ese defecto es que el marcador asume algo que no ha visto, así que se dice en el subtexto: *"Se jugaron N cartas o más y Fulano pasa de 5 a 6. Si no llegaron, desmárcalo"*, con el recuento del sumador como pista cuando lo hay. En el tope de 10 cartas la casilla se deshabilita, y al corregir una ronda pasada manda lo que se guardó, no el defecto.
+
+La regla sigue teniendo sus dos condiciones separadas en `concedeAumento` (`src/dominio/reglas.ts`), que es donde le corresponde estar: lo que se ha juntado es la forma de preguntarlo, no la regla.
 
 ### La app nunca se recarga sola
 

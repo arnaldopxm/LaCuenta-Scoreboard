@@ -45,6 +45,10 @@ También a propósito. No hay deuda: te quedas a cero y eso termina la partida. 
 
 Correcto. La propina se suma al total **antes** del recorte a cero. Con las cartas en −20 y 5 de propina: `max(0, −20 + 5) = 0`, no paga nadie. Si el marcador recortara el total a cero antes de sumar la propina saldría 5 € y alguien pagaría de más.
 
+### El +1 al límite de mano viene marcado sin que yo lo pida
+
+A propósito. La mayoría de rondas llegan al mínimo de cartas, y quien se pone a contarlas es porque quiere el aumento. El marcador no ve la mesa, así que lo da por hecho y lo dice: si no se jugaron cartas suficientes, se desmarca. En el tope de 10 cartas no se puede marcar.
+
 ### Un plato quemado, ¿cuenta como carta para el aumento de mano?
 
 Sí. Resta euros pero es una carta puesta en la mesa, y la regla del aumento cuenta **cartas jugadas, no euros**. En el sumador se mete con `±`.

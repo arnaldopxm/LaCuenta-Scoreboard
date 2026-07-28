@@ -160,9 +160,15 @@ await pagina.getByLabel('Total de las cartas').fill('137')
 await pagina.getByLabel('Propina').fill('4')
 await pagina.getByRole('radio', { name: /A pachas/ }).click()
 await pagina.getByRole('checkbox', { name: 'Jugador 4' }).click()
-await pagina.getByRole('checkbox', { name: /Se jugaron al menos 5 cartas/ }).click()
-await pagina.getByRole('checkbox', { name: /\+1 al límite de mano/ }).click()
 await pagina.waitForSelector('text=Previsualización')
+
+// El aumento de mano es una sola casilla y viene marcada: el caso normal no
+// cuesta ningún toque. Si esto se rompe, el +1 de más abajo tampoco se concede.
+const casillaAumento = pagina.getByRole('checkbox', { name: /\+1 al límite de mano/ })
+comprobar(
+  'El aumento de mano viene marcado por defecto',
+  (await casillaAumento.getAttribute('aria-checked')) === 'true',
+)
 if (CAPTURAS) await pagina.screenshot({ path: 'capturas/04-cerrar-ronda.png', fullPage: true })
 
 const previsualizacion = await texto()
