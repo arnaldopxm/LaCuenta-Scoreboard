@@ -135,9 +135,23 @@ Una opción intermedia si lo que se busca es sostener el proyecto: un enlace de 
 
 El repositorio es público y está desplegado, y **no lleva ninguna licencia**. Sin archivo de licencia lo que aplica por defecto es "todos los derechos reservados": legalmente nadie puede usarlo, copiarlo ni contribuir, aunque el código esté a la vista.
 
-Si la intención es que sea un proyecto personal y nada más, se puede dejar tal cual — pero conviene que sea a sabiendas. Si se quiere que alguien pueda mirarlo, forkearlo o mandar un arreglo, hace falta elegir una (MIT y Apache-2.0 son las de siempre para algo así) y añadir el archivo.
+Si la intención es **código propietario**, sin licencia ya se consigue en términos de copyright: por defecto son todos los derechos reservados. Lo único que conviene añadir es un aviso explícito, porque en GitHub la ausencia de archivo de licencia se lee muy a menudo como "esto se puede usar".
 
-No lo he decidido yo porque no me corresponde.
+Ojo con una cosa antes de pensar en poner el repositorio en privado: **GitHub Pages en plan gratuito exige que el repositorio sea público.** Ponerlo privado tumba el despliegue actual salvo que se pase a un plan de pago.
+
+### Avisos de terceros: esto no es opcional
+
+Independientemente de la licencia que se elija para el código propio, las dependencias traen las suyas y **hay que cumplirlas también en una app propietaria**:
+
+- **React** — MIT. Obliga a conservar el aviso de copyright y el texto de la licencia.
+- **Dexie** — Apache-2.0. Igual, más su propio aviso.
+- **Alfa Slab One, Source Sans 3, Courier Prime** — SIL OFL 1.1. La licencia tiene que acompañar a los archivos de fuente, y la OFL además restringe el uso de los Reserved Font Names en versiones modificadas.
+
+Falta por tanto un archivo de avisos de terceros (`TERCEROS.md` o equivalente) con esos textos. Es lo único de este apartado que es una obligación y no una elección.
+
+Y una que no cubre ninguna licencia: ser propietario del código no da ningún derecho sobre **La Cuenta** como juego. Ahí lo que importa es la línea de "herramienta no oficial" del punto de créditos, no la licencia.
+
+Lo de elegir licencia no lo decido yo porque no me corresponde.
 
 ---
 
