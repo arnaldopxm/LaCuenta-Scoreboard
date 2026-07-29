@@ -25,7 +25,7 @@ npm run preview      # sirve dist/ como en producción
 ## Cómo pasar los tests
 
 ```bash
-npm test             # los 164 tests del dominio, la persistencia y el PWA
+npm test             # los 177 tests del dominio, la persistencia y el PWA
 npm run test:watch
 npm run typecheck    # app y service worker, cada uno con su tsconfig
 ```
@@ -40,7 +40,7 @@ npm run verificar:offline
 
 Levanta un servidor estático con `dist/`, abre Chromium, instala el service worker, juega una partida, **corta la red del navegador**, recarga y comprueba que todo siga en pie. También vigila que no salga ni una petición fuera del origen.
 
-Las diecinueve comprobaciones que hace:
+Las veintitrés comprobaciones que hace:
 
 | Comprobación | Qué verifica |
 |---|---|
@@ -48,6 +48,7 @@ Las diecinueve comprobaciones que hace:
 | Precache poblado | Los 16 recursos del shell, avisos legales incluidos |
 | La versión que se enseña es la del worker | El `postMessage` de versión, ya en la primera carga |
 | El tema se cambia desde el inicio | Sin partida abierta, fuera del marcador |
+| El wizard de instalación se abre desde el inicio | Y enseña uno de los tres caminos, nunca ninguno |
 | El aumento de mano viene marcado por defecto | El caso normal no cuesta ningún toque |
 | Previsualización con redondeo al alza | 141 € entre 4 → 36 € cada uno |
 | Ahorros aplicados al marcador | El fold de rondas llega a la pantalla |
@@ -63,6 +64,9 @@ Las diecinueve comprobaciones que hace:
 | Navegación servida desde caché | Arranque en frío sin red |
 | Cero peticiones fuera del origen | Ni fuentes, ni iconos, ni telemetría |
 | Sin errores de JavaScript | Incluidas violaciones de CSP |
+| En iOS se explica el gesto de Compartir | Con un contexto que se anuncia como iPhone |
+| El icono de compartir va dibujado | Sin fuentes de iconos ni nada remoto |
+| Sin errores de JavaScript en iOS | En ese mismo contexto |
 
 Si el entorno tiene otro Chromium, se le pasa con `CHROMIUM_BIN=/ruta/al/chrome`.
 
@@ -159,11 +163,11 @@ src/
 ├─ estado/          el puente con React: usePartida, useNavegacion, y el
 │                   tema (tema.ts fuera de React, useTema para pintarlo)
 ├─ pantallas/       Inicio, NuevaPartida, Marcador, CerrarRonda,
-│                   HistorialRondas, FinPartida, HistorialPartidas
+│                   HistorialRondas, FinPartida, HistorialPartidas, Instalar
 ├─ componentes/     Cartucho, Pizarra, Ticket, FilaJugador, controles
 ├─ estilos/         tokens.css (paleta y modo oscuro) y base.css
 ├─ fuentes/         los .woff2, dentro del bundle
-├─ pwa/             registro del worker, comprobación de versión y aviso
+├─ pwa/             registro del worker, versión, aviso e instalación
 └─ sw/              el service worker, con su propio tsconfig
 ```
 
@@ -214,6 +218,20 @@ Eran dos casillas, y la segunda estaba deshabilitada hasta marcar la primera: el
 El precio de ese defecto es que el marcador asume algo que no ha visto, así que se dice en el subtexto: *"Se jugaron N cartas o más y Fulano pasa de 5 a 6. Si no llegaron, desmárcalo"*, con el recuento del sumador como pista cuando lo hay. En el tope de 10 cartas la casilla se deshabilita, y al corregir una ronda pasada manda lo que se guardó, no el defecto.
 
 La regla sigue teniendo sus dos condiciones separadas en `concedeAumento` (`src/dominio/reglas.ts`), que es donde le corresponde estar: lo que se ha juntado es la forma de preguntarlo, no la regla.
+
+### Instalar se ofrece una vez y no insiste
+
+El encargo pedía "sin prompt de instalación intrusivo. Un acceso discreto", así que **no hay nada que salga por su cuenta**: un enlace pequeño en el inicio, y una pantalla con las instrucciones que solo se ve si se pide. En Chromium se captura `beforeinstallprompt` y se le hace `preventDefault()`, que es justo lo que calla la barrita que el navegador saca solo; el diálogo se abre cuando el usuario pulsa.
+
+Son tres caminos y no dos, porque manda el navegador y no el sistema (`src/pwa/caminoInstalacion.ts`):
+
+| Camino | Cuándo | Qué se ve |
+|---|---|---|
+| `directa` | Hay un `beforeinstallprompt` guardado | Un botón que abre el diálogo del navegador |
+| `ios` | Safari de iPhone o iPad | Las instrucciones del gesto: **no hay API** y el diálogo no se puede provocar |
+| `manual` | Todo lo demás | Dónde mirar en el menú del navegador |
+
+El enlace **desaparece en cuanto la app está instalada** —`display-mode: standalone` en Android y escritorio, `navigator.standalone` en iOS—, que ofrecer instalar algo ya instalado es la clase de insistencia que se quería evitar. El icono de compartir de iOS va dibujado como SVG: no se puede tirar de una fuente de iconos, y menos de una remota.
 
 ### La app nunca se recarga sola
 
@@ -279,7 +297,9 @@ Sin emojis en la interfaz. Los iconos son SVG dibujados a mano en el propio cód
 
 ## Qué queda por hacer
 
-En [PENDIENTES.md](PENDIENTES.md), ordenado de "se puede hacer ya" a "hay que decidir antes": tocar una ficha para doblarla, dudas frecuentes dentro de la app, invitación a instalar en Android e iOS, créditos, el manual del juego, el reconocimiento de cartas por foto y el asunto de la publicidad, que choca de frente con los no-negociables y necesita una decisión consciente. Las actualizaciones del PWA ya están hechas; queda anotado allí un fleco de maquetación del aviso.
+En [PENDIENTES.md](PENDIENTES.md), ordenado de "se puede hacer ya" a "hay que decidir antes": tocar una ficha para doblarla, dudas frecuentes dentro de la app, créditos, el manual del juego, el reconocimiento de cartas por foto y el asunto de la publicidad, que choca de frente con los no-negociables y necesita una decisión consciente.
+
+Ya están hechas las **actualizaciones del PWA** y la **invitación a instalar**. De la segunda queda un fleco anotado allí: el botón directo de Android no se puede verificar en CI —un Chromium sin cabeza no dispara `beforeinstallprompt`— y hay que comprobarlo una vez con un móvil en la mano.
 
 ---
 

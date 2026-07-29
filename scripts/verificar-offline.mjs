@@ -167,6 +167,33 @@ async function vigilarBotonTema(pantalla) {
 }
 await vigilarBotonTema('inicio')
 
+/*
+ * El acceso a instalar: discreto y solo en el inicio, sin prompt que salga por su
+ * cuenta. En una pestaña normal tiene que estar; instalada desaparece, y eso se
+ * comprueba en los tests unitarios porque aquí no hay forma de fingir el modo app.
+ */
+await pagina.getByRole('button', { name: 'Instalar en el móvil' }).click()
+await pagina.waitForSelector('text=Instalar', { timeout: 5000 })
+const wizard = await texto()
+/*
+ * Cuál de los tres caminos sale depende del navegador, y en un Chromium sin
+ * cabeza `beforeinstallprompt` puede no dispararse. Se comprueba que salga uno,
+ * y se dice cuál: lo que no puede pasar es que no salga ninguno.
+ */
+const caminos = [
+  ['directa', wizard.includes('Instalar ahora')],
+  ['ios', wizard.includes('En iPhone o iPad')],
+  ['manual', wizard.includes('Desde el menú del navegador')],
+].filter(([, sale]) => sale)
+comprobar(
+  'El wizard de instalación se abre desde el inicio y enseña un camino',
+  caminos.length === 1,
+  caminos.map(([nombre]) => nombre).join(', ') || 'ninguno',
+)
+// Al inicio, que aquí todavía no hay partida abierta y no existe "Continuar".
+await pagina.goBack()
+await pagina.waitForSelector('text=Marcador de partidas', { timeout: 5000 })
+
 // Se juega una partida entera para que haya algo que sobreviva al corte.
 await pagina.getByRole('button', { name: 'Nueva partida' }).click()
 await vigilarBotonTema('nueva partida')
@@ -307,6 +334,44 @@ if (CAPTURAS) {
   await pagina.waitForSelector('text=Previsualización')
   await pagina.screenshot({ path: 'capturas/07-cerrar-ronda-oscuro.png', fullPage: true })
 }
+
+/*
+ * · Instalación en iOS
+ *
+ * La rama que no se puede comprobar de ninguna otra forma: en iOS no hay API de
+ * instalación, así que lo único que hay son unas instrucciones, y aquí no hay
+ * iPhone. Con un contexto que se anuncia como iPhone se comprueba al menos que
+ * salgan las instrucciones correctas y no las del menú de Chromium.
+ */
+console.log('\n· Instalación en iOS\n')
+const contextoIOS = await navegador.newContext({
+  viewport: { width: 390, height: 844 },
+  locale: 'es-ES',
+  userAgent:
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1',
+})
+const paginaIOS = await contextoIOS.newPage()
+const erroresIOS = []
+paginaIOS.on('pageerror', (error) => erroresIOS.push(String(error)))
+await paginaIOS.goto(BASE, { waitUntil: 'load' })
+await paginaIOS.getByRole('button', { name: 'Instalar en el móvil' }).click()
+await paginaIOS.waitForSelector('text=En iPhone o iPad', { timeout: 10000 }).catch(() => null)
+const wizardIOS = (await paginaIOS.textContent('body')).replace(/ /g, ' ')
+comprobar(
+  'En iOS se explica el gesto de Compartir, no el menú de Chromium',
+  wizardIOS.includes('Añadir a pantalla de inicio') &&
+    wizardIOS.includes('Compartir') &&
+    !wizardIOS.includes('Desde el menú del navegador'),
+)
+comprobar(
+  'El icono de compartir va dibujado, sin fuentes de iconos ni nada remoto',
+  (await paginaIOS.locator('ol svg').count()) >= 1,
+)
+comprobar('Sin errores de JavaScript en iOS', erroresIOS.length === 0, erroresIOS.join(' | '))
+if (CAPTURAS) {
+  await paginaIOS.screenshot({ path: 'capturas/08-instalar-ios.png', fullPage: true })
+}
+await contextoIOS.close()
 
 await navegador.close()
 servidor.close()
