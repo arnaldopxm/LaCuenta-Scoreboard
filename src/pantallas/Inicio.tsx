@@ -12,6 +12,8 @@ interface Props {
   onContinuar: () => void
   onNueva: () => void
   onHistorial: () => void
+  /** Sin definir cuando ya está instalada: entonces no hay nada que ofrecer. */
+  onInstalar?: () => void
 }
 
 export function Inicio({
@@ -21,6 +23,7 @@ export function Inicio({
   onContinuar,
   onNueva,
   onHistorial,
+  onInstalar,
 }: Props) {
   return (
     <div className={estilos.inicio}>
@@ -62,6 +65,19 @@ export function Inicio({
             : `Historial (${numTerminadas} ${numTerminadas === 1 ? 'partida' : 'partidas'})`}
         </Boton>
       </div>
+
+      {/*
+        Acceso discreto a cómo instalar, y solo si no lo está: el encargo pedía
+        que no hubiera prompt intrusivo, así que esto no insiste ni aparece solo.
+        Desaparece en cuanto la app está instalada.
+      */}
+      {onInstalar ? (
+        <p className={estilos.instalar}>
+          <button type="button" className={estilos.enlace} onClick={onInstalar}>
+            Instalar en el móvil
+          </button>
+        </p>
+      ) : null}
 
       {/*
         La versión, en pequeño. No es decoración: es lo primero que hay que

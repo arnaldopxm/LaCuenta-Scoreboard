@@ -79,6 +79,31 @@
   opacity: 0.85;
 }
 
+/*
+ * Acceso a instalar: discreto, con el pulsable de 48 px aunque el texto sea
+ * pequeño, que esto se toca con el pulgar.
+ */
+.instalar {
+  margin-top: calc(var(--esp-l) * -1);
+  text-align: center;
+}
+
+.enlace {
+  min-height: var(--toque-min);
+  padding: 0 var(--esp-m);
+  background: none;
+  border: none;
+  color: var(--tinta-media);
+  font-size: 0.95rem;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+
+.enlace:active {
+  color: var(--tinta);
+}
+
 /* Discreta a propósito: se busca cuando hace falta, no se lee de paso. */
 .version {
   margin-top: calc(var(--esp-l) * -1);

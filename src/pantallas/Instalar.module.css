@@ -1,0 +1,74 @@
+.entradilla {
+  color: var(--tinta-media);
+}
+
+.bloque {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-m);
+}
+
+.subtitulo {
+  font-size: 1.15rem;
+}
+
+.pasos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-s);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Misma carta de papel que las filas de nombres: número a la izquierda. */
+.paso {
+  display: flex;
+  align-items: stretch;
+  gap: var(--esp-m);
+  padding: var(--esp-m);
+  border: 2px solid var(--borde-fuerte);
+  border-radius: var(--radio-m);
+  background: var(--superficie);
+  box-shadow: var(--sombra-carta);
+}
+
+.numero {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 2px solid var(--borde-fuerte);
+  border-radius: var(--radio-s);
+  background: var(--mostaza);
+  color: #1e1a17;
+  font-family: var(--fuente-titulo);
+}
+
+.texto {
+  flex: 1;
+  align-self: center;
+}
+
+/*
+ * El icono, en línea con el texto del paso: es lo que hay que reconocer en la
+ * barra del navegador, así que va a tamaño de dedo y no de nota al pie.
+ */
+.icono {
+  display: inline-grid;
+  place-items: center;
+  vertical-align: middle;
+  margin-left: var(--esp-s);
+  width: 38px;
+  height: 38px;
+  border: 2px solid var(--borde);
+  border-radius: var(--radio-s);
+  background: var(--superficie-hundida);
+  color: var(--tinta);
+}
+
+.nota {
+  font-size: 0.9rem;
+  color: var(--tinta-media);
+}

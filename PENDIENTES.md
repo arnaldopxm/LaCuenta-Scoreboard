@@ -106,21 +106,21 @@ Archivos: `src/pwa/registro.ts`, `src/pwa/ritmoComprobacion.ts`, `src/pwa/estado
 
 ## 4. Invitación a instalar, en Android y en iOS
 
-**Listo para hacer, con una restricción de plataforma que no se puede sortear.**
+**Hecho, con un fleco que solo se cierra con un Android en la mano.**
 
-Hoy **no hay nada**: si alguien no sabe que esto se puede instalar, se queda usándolo en una pestaña. El encargo pedía "sin prompt de instalación intrusivo. Un acceso discreto", así que el objetivo es un acceso discreto, no un modal al primer arranque.
+Antes no había nada: quien no supiera que esto se puede instalar se quedaba usándolo en una pestaña. Ahora hay un **enlace discreto en el inicio** —"Instalar en el móvil"— y una pantalla propia con las instrucciones. Nada sale por su cuenta: no hay modal al arrancar ni tira que haya que cerrar, así que tampoco hay nada que recordar en `localStorage`. Se ve si se pide, y si no, no.
 
-Son dos implementaciones distintas porque las plataformas no se parecen:
+Son tres caminos y no dos, porque manda el navegador y no el sistema (`src/pwa/caminoInstalacion.ts`):
 
-- **Android / Chromium.** Hay API: se captura el evento `beforeinstallprompt`, se guarda, y se enseña un botón propio que llama a `prompt()` cuando el usuario quiera. El navegador solo dispara ese evento si la PWA cumple los criterios de instalabilidad, que ya se cumplen (manifiesto, service worker, HTTPS).
-- **iOS / Safari.** **No hay API.** `beforeinstallprompt` no existe y no se puede provocar el diálogo. Lo único posible es explicar el gesto: *Compartir → Añadir a pantalla de inicio*, con el icono de compartir dibujado para que se reconozca. Es una instrucción, no un botón.
+- **`directa`.** Hay un `beforeinstallprompt` guardado, así que hay un botón de verdad que abre el diálogo del navegador. Es Chromium con la PWA cumpliendo los criterios de instalabilidad, que ya se cumplen (manifiesto, service worker, HTTPS). Al evento se le hace `preventDefault()`, que es justo lo que calla la barrita que Chrome saca por su cuenta, y se guarda para cuando el usuario pulse. El evento **se gasta**: una vez usado ya no vale, y el navegador lo volverá a disparar cuando le parezca.
+- **`ios`.** **No hay API.** `beforeinstallprompt` no existe en Safari y el diálogo no se puede provocar, así que son tres pasos explicados: *Compartir → Añadir a pantalla de inicio → Añadir*, con el icono de compartir dibujado como SVG para que se reconozca. Con el aviso de que **tiene que ser Safari**: los demás navegadores de iPhone no pueden añadir nada a la pantalla de inicio.
+- **`manual`.** Firefox, escritorio, o un Chromium que aún no ha disparado el evento: se dice dónde mirar en el menú y ya.
 
-Detalles a respetar:
+El enlace **desaparece en cuanto está instalada** —`display-mode: standalone` en Android y escritorio, `navigator.standalone` en iOS—, y se vuelve a mirar al volver a primer plano, porque en iOS se sale de la app instalada al navegador sin recargar.
 
-- **No enseñarlo si ya está instalada.** `window.matchMedia('(display-mode: standalone)')` cubre Android y, en iOS, `navigator.standalone`.
-- **Recordar que se descartó**, y no volver a insistir. En `localStorage` como el tema, que no es estado de partida.
-- Sin modales al arrancar. Un botón discreto en el inicio, y como mucho una tira que se pueda cerrar.
-- El icono de compartir de iOS hay que dibujarlo como SVG en el código: no se puede tirar de una fuente de iconos, y menos de una remota.
+Lo que se comprueba: la decisión de camino y el reconocimiento de plataforma tienen tests unitarios con agentes de usuario reales, incluido el de **iPadOS, que se anuncia como un Mac de escritorio** y se le pilla por los puntos de contacto. La verificación offline abre el wizard y exige que salga **uno** de los tres caminos —nunca ninguno—, y con un contexto que se anuncia como iPhone comprueba que salgan las instrucciones de Safari y no las del menú de Chromium.
+
+**El fleco:** el camino `directa` no se puede verificar en CI. Un Chromium sin cabeza no dispara `beforeinstallprompt`, así que en la verificación sale siempre el camino `manual`. Que el botón de instalar aparezca de verdad y abra el diálogo **hay que comprobarlo una vez con un Android en la mano**. Si ahí no sale, lo que se ve es el camino `manual`, que sigue siendo instrucciones correctas: el fallo degrada, no rompe.
 
 ---
 

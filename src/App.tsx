@@ -7,8 +7,10 @@ import { FinPartida } from './pantallas/FinPartida.tsx'
 import { HistorialPartidas } from './pantallas/HistorialPartidas.tsx'
 import { HistorialRondas } from './pantallas/HistorialRondas.tsx'
 import { Inicio } from './pantallas/Inicio.tsx'
+import { Instalar } from './pantallas/Instalar.tsx'
 import { Marcador } from './pantallas/Marcador.tsx'
 import { NuevaPartida } from './pantallas/NuevaPartida.tsx'
+import { useInstalacion } from './pwa/useInstalacion.ts'
 import { useVersion } from './pwa/useVersion.ts'
 import estilos from './App.module.css'
 
@@ -24,6 +26,7 @@ type Vista =
   | { nombre: 'rondas' }
   | { nombre: 'archivo' }
   | { nombre: 'ver'; partidaId: string }
+  | { nombre: 'instalar' }
 
 const INICIO: Vista = { nombre: 'inicio' }
 
@@ -31,6 +34,7 @@ export function App() {
   const control = usePartida()
   const { vista, ir, volver, reemplazar, reiniciar } = useNavegacion<Vista>(INICIO)
   const version = useVersion()
+  const { instalada } = useInstalacion()
 
   const { partida, terminadas, cargando, errorGuardado } = control
 
@@ -63,6 +67,8 @@ export function App() {
         onContinuar={() => ir({ nombre: 'marcador' })}
         onNueva={() => ir({ nombre: 'nueva' })}
         onHistorial={() => ir({ nombre: 'archivo' })}
+        // Instalada no se ofrece instalar: sería insistir con algo hecho.
+        onInstalar={instalada ? undefined : () => ir({ nombre: 'instalar' })}
       />
     )
 
@@ -85,6 +91,10 @@ export function App() {
 
       case 'archivo':
         return archivo
+
+      case 'instalar':
+        return <Instalar onAtras={volver} />
+
 
       case 'ver': {
         const guardada = terminadas.find((p) => p.id === vista.partidaId)

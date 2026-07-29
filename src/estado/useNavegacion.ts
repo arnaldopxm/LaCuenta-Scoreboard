@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 /**
  * Navegación por pila, sincronizada con el historial del navegador.
  *
- * No hay router ni URLs: son siete pantallas y la app se instala, así que no
+ * No hay router ni URLs: son ocho pantallas y la app se instala, así que no
  * tiene sentido que cada una tenga dirección propia. Pero el botón físico de
  * atrás de Android y el gesto de deslizar de iOS SÍ tienen que funcionar, y
  * para eso basta con empujar una entrada de historial por pantalla.
