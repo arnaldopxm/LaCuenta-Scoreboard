@@ -25,7 +25,7 @@ npm run preview      # sirve dist/ como en producción
 ## Cómo pasar los tests
 
 ```bash
-npm test             # los 177 tests del dominio, la persistencia y el PWA
+npm test             # los 190 tests del dominio, la persistencia y el PWA
 npm run test:watch
 npm run typecheck    # app y service worker, cada uno con su tsconfig
 ```
@@ -40,7 +40,7 @@ npm run verificar:offline
 
 Levanta un servidor estático con `dist/`, abre Chromium, instala el service worker, juega una partida, **corta la red del navegador**, recarga y comprueba que todo siga en pie. También vigila que no salga ni una petición fuera del origen.
 
-Las veintitrés comprobaciones que hace:
+Las veintiséis comprobaciones que hace:
 
 | Comprobación | Qué verifica |
 |---|---|
@@ -49,6 +49,9 @@ Las veintitrés comprobaciones que hace:
 | La versión que se enseña es la del worker | El `postMessage` de versión, ya en la primera carga |
 | El tema se cambia desde el inicio | Sin partida abierta, fuera del marcador |
 | El wizard de instalación se abre desde el inicio | Y enseña uno de los tres caminos, nunca ninguno |
+| Las dudas frecuentes se abren desde el inicio | Y al tocar una pregunta se lee la respuesta |
+| Doblar una ficha ya sumada rehace el total | 12 doblado + 8 → 32 € en el campo |
+| Quitar desde el menú de la ficha saca solo esa carta | Quedan 8 € |
 | El aumento de mano viene marcado por defecto | El caso normal no cuesta ningún toque |
 | Previsualización con redondeo al alza | 141 € entre 4 → 36 € cada uno |
 | Ahorros aplicados al marcador | El fold de rondas llega a la pantalla |
@@ -59,7 +62,7 @@ Las veintitrés comprobaciones que hace:
 | Guardar una corrección devuelve al historial | Confirmar sale por donde se entró |
 | La app arranca en modo avión | Recarga sin red |
 | El tema elegido sobrevive a recargar sin red | Lo aplica el script en línea antes de pintar |
-| El botón de tema está en todas las pantallas | Las seis del recorrido |
+| El botón de tema está en todas las pantallas | Las siete del recorrido |
 | La partida y la corrección sobreviven sin red | IndexedDB persiste |
 | Navegación servida desde caché | Arranque en frío sin red |
 | Cero peticiones fuera del origen | Ni fuentes, ni iconos, ni telemetría |
@@ -163,7 +166,8 @@ src/
 ├─ estado/          el puente con React: usePartida, useNavegacion, y el
 │                   tema (tema.ts fuera de React, useTema para pintarlo)
 ├─ pantallas/       Inicio, NuevaPartida, Marcador, CerrarRonda,
-│                   HistorialRondas, FinPartida, HistorialPartidas, Instalar
+│                   HistorialRondas, FinPartida, HistorialPartidas,
+│                   Instalar, Dudas
 ├─ componentes/     Cartucho, Pizarra, Ticket, FilaJugador, controles
 ├─ estilos/         tokens.css (paleta y modo oscuro) y base.css
 ├─ fuentes/         los .woff2, dentro del bundle
@@ -218,6 +222,27 @@ Eran dos casillas, y la segunda estaba deshabilitada hasta marcar la primera: el
 El precio de ese defecto es que el marcador asume algo que no ha visto, así que se dice en el subtexto: *"Se jugaron N cartas o más y Fulano pasa de 5 a 6. Si no llegaron, desmárcalo"*, con el recuento del sumador como pista cuando lo hay. En el tope de 10 cartas la casilla se deshabilita, y al corregir una ronda pasada manda lo que se guardó, no el defecto.
 
 La regla sigue teniendo sus dos condiciones separadas en `concedeAumento` (`src/dominio/reglas.ts`), que es donde le corresponde estar: lo que se ha juntado es la forma de preguntarlo, no la regla.
+
+### Tocar una ficha del sumador abre un menú, ya no borra
+
+El sumador de cartas tiene teclado propio —el del sistema tapa media pantalla y no trae un menos, y los platos quemados restan— y va dejando cada carta como una ficha. **Tocar una ficha abre un menú con Doblar y Quitar.**
+
+Antes la borraba en el acto, y eso dejaba fuera un caso normal: el `×2` de Premium solo actúa sobre la carta que estás tecleando, así que si añadías el plato y *luego* te acordabas del Premium había que quitarlo y volver a meterlo. Ahora se dobla en el sitio, y doblar dos veces multiplica por cuatro sin cerrar el menú.
+
+Dos detalles del cambio:
+
+- **Quitar conserva el peso visual** —más ancho y con el color de peligro— porque es lo que hacía el gesto de siempre, y quien ya usaba la app lo espera ahí.
+- Doblar pasa por `duplicarImporte`, así que el signo y el tope los sigue gobernando un solo sitio: un plato quemado de −15 dobla a −30. El total no se guarda, sale de `sumarImportes` sobre la lista, así que se recalcula solo. Las dos operaciones sobre la lista viven en el dominio (`doblarCartaEn`, `quitarCartaEn`) y tienen tests.
+
+El menú se ata a su carta con el recuadro de la ficha y un rótulo, y no flotando junto a ella: con ocho fichas envolviendo en dos líneas, un desplegable anclado a la última se sale de la pantalla por la derecha.
+
+### Las dudas frecuentes van dentro de la app
+
+Once preguntas en una pantalla colgada del inicio, con las respuestas plegadas. No es un FAQ de relleno: **casi todas son sitios donde el marcador hace algo que parece un error y no lo es** —el redondeo al alza, el cero sin deuda, la propina antes del recorte, el +1 marcado por defecto, el plato quemado que resta euros pero cuenta como carta— y salieron de verdad mientras se construía la app. Tenerlas en el móvil ahorra la discusión en la mesa, y funciona sin cobertura como todo lo demás.
+
+Pantalla propia y no un desplegable en cada pantalla implicada: se lee peor en el momento exacto de la duda, pero no ensucia el formulario de cerrar ronda, que es donde menos margen hay. Las respuestas van en `details` del navegador, sin estado ni JavaScript y accesibles de serie; el pulsable es el `summary` entero y llega a los 48 px aunque la pregunta quepa en una línea.
+
+La versión **se queda en el inicio** y no se muda aquí. Estaba anotado como su sitio natural cuando existiera esta pantalla, pero "¿qué versión tienes?" se pregunta en una terraza con alguien esperando: en el inicio se lee sin un toque, y donde está prueba de paso el viaje del `postMessage` en la primera carga.
 
 ### Instalar se ofrece una vez y no insiste
 
@@ -297,9 +322,9 @@ Sin emojis en la interfaz. Los iconos son SVG dibujados a mano en el propio cód
 
 ## Qué queda por hacer
 
-En [PENDIENTES.md](PENDIENTES.md), ordenado de "se puede hacer ya" a "hay que decidir antes": tocar una ficha para doblarla, dudas frecuentes dentro de la app, créditos, el manual del juego, el reconocimiento de cartas por foto y el asunto de la publicidad, que choca de frente con los no-negociables y necesita una decisión consciente.
+En [PENDIENTES.md](PENDIENTES.md), ordenado de "se puede hacer ya" a "hay que decidir antes": los créditos, el manual del juego, el reconocimiento de cartas por foto y el asunto de la publicidad, que choca de frente con los no-negociables y necesita una decisión consciente.
 
-Ya están hechas las **actualizaciones del PWA** y la **invitación a instalar**. De la segunda queda un fleco anotado allí: el botón directo de Android no se puede verificar en CI —un Chromium sin cabeza no dispara `beforeinstallprompt`— y hay que comprobarlo una vez con un móvil en la mano.
+Ya están hechas las **actualizaciones del PWA**, la **invitación a instalar**, el **menú de la ficha del sumador** y las **dudas frecuentes**. De la invitación a instalar queda un fleco anotado allí: el botón directo de Android no se puede verificar en CI —un Chromium sin cabeza no dispara `beforeinstallprompt`— y hay que comprobarlo una vez con un móvil en la mano.
 
 ---
 

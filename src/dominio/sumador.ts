@@ -41,3 +41,31 @@ export function duplicarImporte(importe: number): number {
 export function cuentaDeSumandos(importes: number[]): number {
   return importes.filter(esImporteConSigno).length
 }
+
+/**
+ * Dobla la carta que está en esa posición y deja el resto como estaba.
+ *
+ * Existe porque el `×2` del sumador solo actuaba sobre lo que se estaba
+ * tecleando: si te acordabas del Premium DESPUÉS de añadir el plato, había que
+ * quitarlo y volver a meterlo. Dobla pasando por `duplicarImporte`, así que el
+ * signo y el tope los sigue gobernando un solo sitio.
+ */
+export function doblarCartaEn(importes: number[], indice: number): number[] {
+  if (!esIndiceDeCarta(importes, indice)) return importes
+  return importes.map((importe, i) => (i === indice ? duplicarImporte(importe) : importe))
+}
+
+/** Quita la carta que está en esa posición. */
+export function quitarCartaEn(importes: number[], indice: number): number[] {
+  if (!esIndiceDeCarta(importes, indice)) return importes
+  return importes.filter((_, i) => i !== indice)
+}
+
+/**
+ * Fuera de rango no se toca nada y se devuelve la MISMA lista: quien nos llama
+ * la mete en un estado de React, y un array nuevo idéntico sería un cambio de
+ * estado por nada.
+ */
+function esIndiceDeCarta(importes: number[], indice: number): boolean {
+  return Number.isInteger(indice) && indice >= 0 && indice < importes.length
+}

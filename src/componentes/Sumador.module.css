@@ -88,10 +88,68 @@
   font-size: 0.9rem;
 }
 
-.quitar {
+/* Puntos suspensivos y no una cruz: tocar la ficha abre opciones, no borra. */
+.mas {
   font-size: 1.1rem;
   line-height: 1;
   color: var(--tinta-media);
+}
+
+/* La ficha con el menú abierto, marcada: es lo que ata el menú a su carta. */
+.cartaTocada {
+  border-color: var(--borde-fuerte);
+  box-shadow: 0 0 0 2px var(--mostaza-honda);
+}
+
+/* --- Menú de la ficha tocada --- */
+
+/*
+ * Va debajo de la fila de fichas y no flotando junto a la que se ha tocado:
+ * con ocho fichas envolviendo en dos líneas, un desplegable anclado a la última
+ * se sale de la pantalla por la derecha. Lo que dice a qué carta se refiere es
+ * el rótulo, más el recuadro de la propia ficha.
+ */
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-s);
+  padding: var(--esp-s);
+  background: var(--superficie-hundida);
+  border: 2px solid var(--borde-fuerte);
+  border-radius: var(--radio-m);
+}
+
+.menuRotulo {
+  font-size: 0.85rem;
+  color: var(--tinta-media);
+}
+
+/* Quitar más ancho que doblar: es lo que hacía el gesto de siempre. */
+.menuAcciones {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr;
+  gap: var(--esp-s);
+}
+
+/*
+ * Con el color de peligro en el texto y el borde, no en el fondo: sobre el
+ * relleno claro contrasta en los dos temas, y en oscuro el peligro se aclara
+ * tanto que el texto crema encima no se leería.
+ */
+.quitar {
+  min-height: var(--toque-min);
+  border: 2px solid var(--peligro);
+  border-radius: var(--radio-m);
+  background: color-mix(in srgb, var(--peligro) 16%, var(--superficie));
+  color: var(--peligro);
+  font-size: 1rem;
+  font-weight: 700;
+  box-shadow: var(--sombra-carta);
+}
+
+.quitar:active {
+  transform: translateY(2px);
+  box-shadow: none;
 }
 
 /* --- Pantalla --- */

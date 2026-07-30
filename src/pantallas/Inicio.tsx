@@ -12,6 +12,7 @@ interface Props {
   onContinuar: () => void
   onNueva: () => void
   onHistorial: () => void
+  onDudas: () => void
   /** Sin definir cuando ya está instalada: entonces no hay nada que ofrecer. */
   onInstalar?: () => void
 }
@@ -23,6 +24,7 @@ export function Inicio({
   onContinuar,
   onNueva,
   onHistorial,
+  onDudas,
   onInstalar,
 }: Props) {
   return (
@@ -67,17 +69,21 @@ export function Inicio({
       </div>
 
       {/*
-        Acceso discreto a cómo instalar, y solo si no lo está: el encargo pedía
-        que no hubiera prompt intrusivo, así que esto no insiste ni aparece solo.
-        Desaparece en cuanto la app está instalada.
+        Los dos accesos secundarios, discretos: las dudas de mesa y cómo
+        instalar. Instalar solo si no lo está —el encargo pedía que no hubiera
+        prompt intrusivo, así que esto no insiste ni aparece solo—, y las dudas
+        siempre, que es donde se consultan las decisiones raras del marcador.
       */}
-      {onInstalar ? (
-        <p className={estilos.instalar}>
+      <p className={estilos.enlaces}>
+        <button type="button" className={estilos.enlace} onClick={onDudas}>
+          Dudas frecuentes
+        </button>
+        {onInstalar ? (
           <button type="button" className={estilos.enlace} onClick={onInstalar}>
             Instalar en el móvil
           </button>
-        </p>
-      ) : null}
+        ) : null}
+      </p>
 
       {/*
         La versión, en pequeño. No es decoración: es lo primero que hay que

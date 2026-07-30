@@ -80,12 +80,18 @@
 }
 
 /*
- * Acceso a instalar: discreto, con el pulsable de 48 px aunque el texto sea
- * pequeño, que esto se toca con el pulgar.
+ * Accesos secundarios: discretos, con el pulsable de 48 px aunque el texto sea
+ * pequeño, que esto se toca con el pulgar. En una línea si caben, y si no
+ * envuelven, que "Instalar en el móvil" desaparece al instalarse y entonces
+ * queda solo uno.
  */
-.instalar {
+.enlaces {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: var(--esp-s);
   margin-top: calc(var(--esp-l) * -1);
-  text-align: center;
 }
 
 .enlace {

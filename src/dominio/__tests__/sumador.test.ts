@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { calcularCuenta } from '../calculoRonda.ts'
-import { cuentaDeSumandos, duplicarImporte, sumarImportes } from '../sumador.ts'
+import {
+  cuentaDeSumandos,
+  doblarCartaEn,
+  duplicarImporte,
+  quitarCartaEn,
+  sumarImportes,
+} from '../sumador.ts'
 import { MAX_IMPORTE } from '../validacion.ts'
 
 describe('sumar cartas', () => {
@@ -102,6 +108,83 @@ describe('doblar una carta para Premium', () => {
   it('con basura devuelve cero en vez de NaN', () => {
     expect(duplicarImporte(Number.NaN)).toBe(0)
     expect(duplicarImporte(12.5)).toBe(0)
+  })
+})
+
+/*
+ * Doblar y quitar una carta YA sumada, que es lo que abre el menú de la ficha.
+ * Antes solo se podía doblar lo que se estaba tecleando, así que acordarse del
+ * Premium a posteriori obligaba a rehacer la carta.
+ */
+describe('tocar una carta ya sumada', () => {
+  it('doblar una carta deja el resto igual', () => {
+    expect(doblarCartaEn([12, 8, 15], 1)).toEqual([12, 16, 15])
+  })
+
+  it('doblar un plato quemado dobla el descuento, no lo convierte en tapa', () => {
+    expect(doblarCartaEn([20, -15], 1)).toEqual([20, -30])
+  })
+
+  it('doblar dos veces multiplica por cuatro', () => {
+    expect(doblarCartaEn(doblarCartaEn([9], 0), 0)).toEqual([36])
+  })
+
+  it('doblar respeta el tope, igual que duplicarImporte', () => {
+    expect(doblarCartaEn([MAX_IMPORTE], 0)).toEqual([MAX_IMPORTE])
+    expect(doblarCartaEn([-MAX_IMPORTE], 0)).toEqual([-MAX_IMPORTE])
+  })
+
+  it('el total sale del fold, así que doblar lo recalcula solo', () => {
+    const cartas = [12, 8, 15]
+    expect(sumarImportes(cartas)).toBe(35)
+    expect(sumarImportes(doblarCartaEn(cartas, 1))).toBe(43)
+  })
+
+  it('doblar no cambia el recuento de cartas: la del aumento sigue igual', () => {
+    const cartas = [12, 8, 15]
+    expect(cuentaDeSumandos(doblarCartaEn(cartas, 0))).toBe(cuentaDeSumandos(cartas))
+  })
+
+  it('quitar saca solo esa carta', () => {
+    expect(quitarCartaEn([12, 8, 15], 1)).toEqual([12, 15])
+  })
+
+  it('quitar la única carta deja la lista vacía', () => {
+    expect(quitarCartaEn([12], 0)).toEqual([])
+  })
+
+  it('quitar sí baja el recuento de cartas', () => {
+    expect(cuentaDeSumandos(quitarCartaEn([12, 8, 15], 2))).toBe(2)
+  })
+
+  it('con cartas repetidas se quita la de esa posición y no todas', () => {
+    expect(quitarCartaEn([10, 10, 10], 0)).toEqual([10, 10])
+  })
+
+  /*
+   * Fuera de rango pasa de verdad: el desglose se descarta si se teclea el total
+   * a mano, así que el índice que tenía el menú abierto puede dejar de existir.
+   */
+  it('un índice que no existe no toca nada y devuelve la misma lista', () => {
+    const cartas = [12, 8]
+    expect(doblarCartaEn(cartas, 5)).toBe(cartas)
+    expect(quitarCartaEn(cartas, 5)).toBe(cartas)
+    expect(doblarCartaEn(cartas, -1)).toBe(cartas)
+    expect(quitarCartaEn(cartas, -1)).toBe(cartas)
+    expect(doblarCartaEn([], 0)).toEqual([])
+  })
+
+  it('un índice que no es entero tampoco toca nada', () => {
+    const cartas = [12, 8]
+    expect(doblarCartaEn(cartas, 1.5)).toBe(cartas)
+    expect(quitarCartaEn(cartas, Number.NaN)).toBe(cartas)
+  })
+
+  it('ninguna de las dos muta la lista de entrada', () => {
+    const cartas = [12, 8, 15]
+    doblarCartaEn(cartas, 0)
+    quitarCartaEn(cartas, 0)
+    expect(cartas).toEqual([12, 8, 15])
   })
 })
 

@@ -3,6 +3,7 @@ import type { BorradorRonda } from './dominio/index.ts'
 import { useNavegacion } from './estado/useNavegacion.ts'
 import { usePartida } from './estado/usePartida.ts'
 import { CerrarRonda } from './pantallas/CerrarRonda.tsx'
+import { Dudas } from './pantallas/Dudas.tsx'
 import { FinPartida } from './pantallas/FinPartida.tsx'
 import { HistorialPartidas } from './pantallas/HistorialPartidas.tsx'
 import { HistorialRondas } from './pantallas/HistorialRondas.tsx'
@@ -27,6 +28,7 @@ type Vista =
   | { nombre: 'archivo' }
   | { nombre: 'ver'; partidaId: string }
   | { nombre: 'instalar' }
+  | { nombre: 'dudas' }
 
 const INICIO: Vista = { nombre: 'inicio' }
 
@@ -67,6 +69,7 @@ export function App() {
         onContinuar={() => ir({ nombre: 'marcador' })}
         onNueva={() => ir({ nombre: 'nueva' })}
         onHistorial={() => ir({ nombre: 'archivo' })}
+        onDudas={() => ir({ nombre: 'dudas' })}
         // Instalada no se ofrece instalar: sería insistir con algo hecho.
         onInstalar={instalada ? undefined : () => ir({ nombre: 'instalar' })}
       />
@@ -94,6 +97,9 @@ export function App() {
 
       case 'instalar':
         return <Instalar onAtras={volver} />
+
+      case 'dudas':
+        return <Dudas onAtras={volver} />
 
 
       case 'ver': {
