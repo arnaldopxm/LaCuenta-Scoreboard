@@ -35,7 +35,22 @@ body {
 body::before {
   content: '';
   position: fixed;
-  inset: 0;
+  /*
+   * Estirada de sobra por arriba y por abajo en vez de `inset: 0`, y es por la
+   * app instalada en iOS.
+   *
+   * Con `apple-mobile-web-app-status-bar-style=black-translucent` y
+   * `viewport-fit=cover`, el viewport contra el que iOS resuelve `position:
+   * fixed` mide el alto de la pantalla MENOS la muesca, pero se sitúa desde el
+   * borde de arriba. Con `inset: 0` la capa se quedaba justo esos 59 px corta
+   * por abajo y asomaba el lienzo sin textura: una franja más oscura pegada al
+   * fondo, medida en un iPhone de 393 × 852 y 60 px de franja.
+   *
+   * Lo que sobra cae fuera de la pantalla y no se ve, y una capa fija no genera
+   * scroll ni barras. Se estira con `vh` y no con los 59 px de la muesca para no
+   * depender de cuánto mida en cada modelo.
+   */
+  inset: -10vh 0;
   background-image: var(--textura-papel);
   opacity: var(--textura-opacidad);
   pointer-events: none;
