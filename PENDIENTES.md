@@ -8,30 +8,39 @@ Los no-negociables del proyecto están en el [README](README.md): offline-first,
 
 ## 1. Tocar una ficha para doblar o quitar
 
-**Listo para hacer. Sin decisiones pendientes.**
+**Hecho.**
 
-Hoy, en el sumador de cartas, tocar una ficha ya sumada la quita. El `×2` de Premium solo actúa sobre la carta que estás tecleando, así que si añades un plato y *luego* te acuerdas de que llevaba Premium, hay que quitarlo y volver a meterlo.
+Antes, tocar una ficha ya sumada la quitaba en el acto. El `×2` de Premium solo actúa sobre la carta que estás tecleando, así que si añadías un plato y *luego* te acordabas de que llevaba Premium, había que quitarlo y volver a meterlo. Ahora tocar una ficha abre un menú pequeño con **Doblar** y **Quitar**.
 
-Cambio: tocar una ficha abre un menú pequeño con **Doblar** y **Quitar** en vez de borrar directamente.
+Cómo quedaron los detalles que había que respetar:
 
-Detalles a respetar:
+- **Doblar pasa por `duplicarImporte`**, así que el signo y el tope los sigue gobernando un solo sitio: un plato quemado de −15 dobla a −30. El total del campo se recalcula solo, porque sale de `sumarImportes` sobre la lista.
+- **El menú se queda abierto al doblar**, que no estaba previsto y sale gratis: un Premium sobre un plato ya doblado —×4— son dos toques en el mismo sitio. Al quitar se cierra, que la ficha ya no está.
+- **Pulsables de 48 px**, y los dos botones igualados en alto por la rejilla.
+- **Quitar conserva el peso visual**: más ancho que Doblar y con el color de peligro, porque es lo que hacía el gesto de siempre. La cruz de la ficha pasó a ser `⋯`, que es lo honesto cuando tocar abre opciones en vez de borrar.
 
-- Doblar tiene que pasar por `duplicarImporte`, que ya respeta el signo y el tope. Un plato quemado de −15 dobla a −30.
-- El total del campo se recalcula solo, porque ya sale de `sumarImportes` sobre la lista.
-- Pulsables de 48 px como el resto: esto se usa con el pulgar y mala luz.
-- Ojo con no romper el gesto actual sin avisar: quien ya use la app espera que tocar una ficha la quite. Igual conviene que **Quitar** sea la opción con más peso visual de las dos.
+Dos cosas que aparecieron al hacerlo:
 
-Archivos: `src/componentes/Sumador.tsx`, `Sumador.module.css`.
+- **El menú va debajo de la fila de fichas, no flotando junto a la que se toca.** Con ocho fichas envolviendo en dos líneas, un desplegable anclado a la última se sale de la pantalla por la derecha. Lo que lo ata a su carta es el recuadro de la ficha tocada más el rótulo del menú.
+- **La operación sobre la lista se fue al dominio** (`doblarCartaEn`, `quitarCartaEn` en `src/dominio/sumador.ts`), que es la única capa con tests: los componentes no se renderizan en los tests. Ahí está también el caso raro que sí pasa —el índice que tenía el menú abierto puede dejar de existir, porque teclear el total a mano descarta el desglose entero—, resuelto derivando el menú en vez de guardar el índice a secas.
+
+El color de Quitar va en el texto y el borde, no en el fondo: en oscuro `--peligro` se aclara tanto que el texto crema encima no se leería.
+
+Archivos: `src/dominio/sumador.ts`, `src/componentes/Sumador.tsx`, `Sumador.module.css`. Se comprueba de punta a punta en `npm run verificar:offline`: doblar la ficha de 12 con otra de 8 deja 32 € en el campo, y quitarla deja 8 €.
 
 ---
 
 ## 2. Sección de dudas frecuentes
 
-**Listo para hacer. El contenido está redactado aquí abajo.**
+**Hecho.** Están en `src/pantallas/Dudas.tsx`. El texto de aquí abajo es el que se sirve, quitándole los apuntes de desarrollo: en la app no se cita ningún archivo del repositorio y la Content Security Policy se llama "una regla de seguridad", que es lo que significa para quien está en un bar.
 
 Estas son las dudas que han salido de verdad mientras se construía la app, no un FAQ inventado. Casi todas son sitios donde el marcador hace algo que parece un error y no lo es, así que tenerlas dentro de la app ahorra discusiones en la mesa.
 
-Sitio: una pantalla propia colgada del inicio, o un desplegable dentro de cada pantalla implicada. Lo segundo se lee mejor en el momento de la duda pero ensucia más las pantallas.
+**Decisión de sitio: pantalla propia colgada del inicio**, con un enlace discreto al lado del de instalar. La otra opción —un desplegable dentro de cada pantalla implicada— se lee mejor en el momento exacto de la duda, pero ensucia justo el formulario de cerrar ronda, que es donde menos margen hay. Las respuestas van plegadas en `details` del navegador: sin estado, sin JavaScript, accesibles de serie, y el pulsable es el `summary` entero para que llegue a los 48 px aunque la pregunta quepa en una línea.
+
+Se añadió una pregunta que no estaba en esta lista, la del Premium a posteriori, porque el punto 1 acababa de darle respuesta: son once en total. Y el tope de 10 cartas de la respuesta del aumento se lee de `LIMITE_MANO_MAX` en vez de escribirse a mano, que las constantes de las reglas viven en un solo sitio.
+
+**La versión se queda en el inicio.** El punto 3 anotaba esta pantalla como su sitio natural, y al llegar aquí no se ha movido: "¿qué versión tienes?" se pregunta con alguien esperando al otro lado, y en el inicio se lee sin un toque. Donde está prueba además el viaje del `postMessage` en la primera carga, que es lo que verifica el script.
 
 ### La suma de lo pagado no cuadra con la cuenta
 
@@ -44,6 +53,10 @@ También a propósito. No hay deuda: te quedas a cero y eso termina la partida. 
 ### Metí un plato quemado y la cuenta salió 0 aunque había propina
 
 Correcto. La propina se suma al total **antes** del recorte a cero. Con las cartas en −20 y 5 de propina: `max(0, −20 + 5) = 0`, no paga nadie. Si el marcador recortara el total a cero antes de sumar la propina saldría 5 € y alguien pagaría de más.
+
+### Añadí una carta y luego me acordé del Premium
+
+Toca la ficha de esa carta en el sumador y elige **Doblar**. El `×2` del teclado solo afecta a la carta que estás tecleando; para una ya sumada, el menú de la ficha. Ahí mismo está **Quitar**.
 
 ### El +1 al límite de mano viene marcado sin que yo lo pida
 
@@ -98,7 +111,7 @@ Instala la versión A, publica la B, y mira que el aviso salga, que nada se reca
 
 **El fleco que estaba anotado aquí, resuelto.** El aviso está fijo abajo (`position: fixed`) y el pie de las pantallas está pegado abajo también (`position: sticky`), así que **el aviso tapaba el botón de acción primaria** —*Empezar*, *Confirmar ronda*, *Cerrar ronda*—. Se resolvió por donde apuntaba la nota: el aviso se mide con un `ResizeObserver` y publica su alto en el `body` como `--alto-aviso`; el pie de `Pantalla` y el inicio le suman ese hueco al `padding-bottom`, que vale 0 cuando no hay aviso. Se mide en vez de reservar a ojo porque el texto envuelve distinto según el ancho y las tipografías del sistema no miden lo mismo en todos los móviles.
 
-Nota de sitio: la versión se enseña en el inicio y no en una pantalla de "Acerca de" porque esa pantalla todavía no existe. Cuando se hagan las dudas frecuentes (punto 2) o los créditos (punto 5), es su sitio natural.
+Nota de sitio, resuelta: la versión se enseña en el inicio. Esta nota decía que las dudas frecuentes (punto 2) serían su sitio natural en cuanto existieran; existen, y se ha decidido dejarla donde está. "¿Qué versión tienes?" se pregunta con alguien esperando al otro lado, y en el inicio se lee sin un toque.
 
 Archivos: `src/pwa/registro.ts`, `src/pwa/ritmoComprobacion.ts`, `src/pwa/estadoActualizacion.ts`, `src/pwa/useSinInterrupciones.ts`, `src/pwa/useVersion.ts`, `src/componentes/AvisoActualizacion.tsx`, `src/sw/sw.ts`, `scripts/verificar-actualizacion.mjs`.
 
@@ -135,7 +148,7 @@ Cuando se retome, esto es lo que debería llevar:
 - Una línea dejando claro que **esto es una herramienta no oficial de aficionado**, sin relación con la editorial. Es lo honesto y evita malentendidos si la app circula.
 - Licencias de las tipografías, las tres SIL OFL 1.1 (Alfa Slab One, Source Sans 3, Courier Prime).
 
-Sitio natural: al final de la pantalla de inicio o en una pantalla de "Acerca de" junto a las dudas frecuentes.
+Sitio natural, ya concreto: **al final de la pantalla de dudas** (punto 2), que existe desde ahora y es la única pantalla de la app que es texto para leer. Cuelga del inicio con un enlace discreto, así que no hay que inventar navegación nueva; como mucho, cambiarle el título si acaba llevando dos cosas.
 
 La licencia del repositorio iba en este punto, pero se sale a su propio apartado más abajo: no es una cuestión de créditos y tiene efecto ya.
 
@@ -237,3 +250,4 @@ Vienen del encargo original y siguen abiertas. Están explicadas en el [README](
 - **Cada push a una rama con PR abierto lanza CI dos veces**, una por el evento `push` y otra por `pull_request`. Se arregla acotando los disparadores, pero cambia qué se comprueba en qué ramas, así que mejor decidirlo con calma. De momento sirve de algo: el 28/07/2026 las dos ejecuciones del mismo commit dieron resultados distintos, y esa contradicción es lo que identificó el fallo del endpoint de auditoría.
 - **El endpoint que usa `npm audit` está en retirada.** npm lo anuncia en cada ejecución y hoy ya devuelve 400 de forma intermitente; `scripts/auditar.sh` lo tolera con reintentos, pero eso es un parche. Cuando npm publique la migración al *bulk advisory endpoint*, o cuando los reintentos dejen de bastar, hay que cambiar la comprobación —o sustituirla por Dependabot, que audita del lado de GitHub y no depende del registro en tiempo de CI.
 - **A pachas sin el pagador.** Nada impide desmarcar a quien pidió la cuenta. Se deja pasar a propósito.
+- **El viewport que ve `position: fixed` en la app instalada de iOS viene corto por abajo.** Medido en una captura de un iPhone de 393 × 852: la capa de textura, que era `fixed; inset: 0`, se quedaba 60 px corta y asomaba el lienzo sin textura como una franja oscura pegada al fondo. Son exactamente los 59 px de la muesca: con `black-translucent` y `viewport-fit=cover`, iOS resuelve el viewport de `fixed` —y de `dvh`— como la pantalla MENOS la muesca, pero lo sitúa desde el borde de arriba. La franja está tapada estirando la capa (`inset: -10vh 0`), pero **la causa sigue ahí y toca a dos cosas más que no se pueden comprobar en CI**, porque un Chromium sin cabeza no reproduce el bug: el **aviso de actualización** está en `bottom: max(12px, safe-bottom)` y debería quedar esos ~59 px más alto de lo que toca, y el **inicio** se centra dentro de 793 px en vez de 852, o sea unos 30 px por encima del centro real. Hay que mirar las dos con el iPhone en la mano, con una actualización esperando para ver el aviso. El arreglo de fondo sería quitar `black-translucent`, y eso cambia cómo se pinta la barra de estado en los dos temas: no se toca a ciegas.

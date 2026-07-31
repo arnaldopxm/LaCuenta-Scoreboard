@@ -194,6 +194,27 @@ comprobar(
 await pagina.goBack()
 await pagina.waitForSelector('text=Marcador de partidas', { timeout: 5000 })
 
+/*
+ * Las dudas frecuentes: casi todas explican una decisión del marcador que parece
+ * un error. Las respuestas van plegadas en `details`, así que se comprueba que la
+ * lista salga Y que al abrir una se lea la respuesta, que es lo que se rompería
+ * si el `summary` dejara de ser el pulsable.
+ */
+await pagina.getByRole('button', { name: 'Dudas frecuentes' }).click()
+await pagina.waitForSelector('text=Toca una pregunta', { timeout: 5000 })
+await vigilarBotonTema('dudas frecuentes')
+const preguntas = await pagina.locator('details summary').count()
+await pagina.getByText('La suma de lo pagado no cuadra con la cuenta').click()
+const respuesta = await texto()
+comprobar(
+  'Las dudas frecuentes se abren desde el inicio y la respuesta se lee',
+  preguntas >= 10 && respuesta.includes('34 € cada uno'),
+  `${preguntas} preguntas`,
+)
+if (CAPTURAS) await pagina.screenshot({ path: 'capturas/09-dudas.png', fullPage: true })
+await pagina.goBack()
+await pagina.waitForSelector('text=Marcador de partidas', { timeout: 5000 })
+
 // Se juega una partida entera para que haya algo que sobreviva al corte.
 await pagina.getByRole('button', { name: 'Nueva partida' }).click()
 await vigilarBotonTema('nueva partida')
@@ -207,7 +228,38 @@ if (CAPTURAS) await pagina.screenshot({ path: 'capturas/03-marcador.png', fullPa
 await pagina.getByRole('button', { name: 'Cerrar ronda' }).click()
 await vigilarBotonTema('cerrar ronda')
 await pagina.getByLabel('Quién pidió la cuenta').getByRole('radio', { name: 'Jugador 2' }).click()
-await pagina.getByLabel('Total de las cartas').fill('137')
+
+/*
+ * El sumador de cartas y el menú de la ficha. Tocar una ficha ya sumada abría el
+ * menú de doblar o quitar en vez de borrarla en el acto, que es lo que hacía
+ * imposible acordarse del Premium DESPUÉS de añadir el plato. Se comprueba en el
+ * campo de arriba, que es la cifra que manda: el total no se guarda, sale de
+ * sumar la lista cada vez.
+ */
+const campoTotal = pagina.getByLabel('Total de las cartas')
+const sumador = pagina.getByRole('region', { name: 'Sumador de cartas' })
+await pagina.getByRole('button', { name: 'Sumar las cartas una a una' }).click()
+for (const digito of ['1', '2']) {
+  await sumador.getByRole('button', { name: digito, exact: true }).click()
+}
+await sumador.getByRole('button', { name: 'Añadir carta' }).click()
+await sumador.getByRole('button', { name: '8', exact: true }).click()
+await sumador.getByRole('button', { name: 'Añadir carta' }).click()
+
+await sumador.getByRole('button', { name: /^Carta de 12 euros/ }).click()
+await sumador.getByRole('button', { name: /^Doblar a / }).click()
+comprobar(
+  'Doblar una ficha ya sumada rehace el total',
+  (await campoTotal.inputValue()) === '32',
+  `12 doblado + 8 → ${await campoTotal.inputValue()} €`,
+)
+
+// Exacto: el nombre de cada ficha acaba en "doblar o quitar" y las cazaría.
+await sumador.getByRole('button', { name: 'Quitar', exact: true }).click()
+comprobar('Quitar desde el menú de la ficha saca solo esa carta', (await campoTotal.inputValue()) === '8')
+await sumador.getByRole('button', { name: 'Cerrar' }).click()
+
+await campoTotal.fill('137')
 await pagina.getByLabel('Propina').fill('4')
 await pagina.getByRole('radio', { name: /A pachas/ }).click()
 await pagina.getByRole('checkbox', { name: 'Jugador 4' }).click()

@@ -1,0 +1,67 @@
+.entradilla {
+  color: var(--tinta-media);
+}
+
+.lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-s);
+}
+
+/* Misma carta de papel que los pasos de instalar. */
+.duda {
+  border: 2px solid var(--borde-fuerte);
+  border-radius: var(--radio-m);
+  background: var(--superficie);
+  box-shadow: var(--sombra-carta);
+}
+
+/*
+ * El pulsable es el summary entero y llega a los 48 px aunque la pregunta quepa
+ * en una línea: esto se lee con el móvil en la mano y a media luz.
+ */
+.pregunta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--esp-m);
+  min-height: var(--toque-min);
+  padding: var(--esp-s) var(--esp-m);
+  font-weight: 600;
+  cursor: pointer;
+  /* Fuera el triángulo del navegador: se sustituye por el signo de la derecha. */
+  list-style: none;
+}
+
+.pregunta::-webkit-details-marker {
+  display: none;
+}
+
+/* El signo cambia al abrir, que es lo que dice si hay algo desplegado. */
+.pregunta::after {
+  content: '+';
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 2px solid var(--borde);
+  border-radius: var(--radio-s);
+  background: var(--superficie-hundida);
+  font-family: var(--fuente-titulo);
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.duda[open] .pregunta::after {
+  content: '−';
+}
+
+.duda[open] .pregunta {
+  border-bottom: 2px solid var(--borde);
+}
+
+.respuesta {
+  padding: var(--esp-m);
+  color: var(--tinta-media);
+}

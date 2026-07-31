@@ -1,5 +1,11 @@
 import { useState } from 'react'
-import { duplicarImporte, parsearImporteConSigno, sumarImportes } from '../dominio/index.ts'
+import {
+  doblarCartaEn,
+  duplicarImporte,
+  parsearImporteConSigno,
+  quitarCartaEn,
+  sumarImportes,
+} from '../dominio/index.ts'
 import estilos from './Sumador.module.css'
 
 interface Props {
@@ -28,10 +34,23 @@ export function Sumador({ importes, onCambio }: Props) {
   const [abierto, setAbierto] = useState(false)
   const [digitos, setDigitos] = useState('')
   const [negativo, setNegativo] = useState(false)
+  /** Posición de la ficha que tiene el menú de doblar y quitar abierto. */
+  const [fichaTocada, setFichaTocada] = useState<number | null>(null)
 
   const total = sumarImportes(importes)
   const valorEntrada = parsearImporteConSigno(`${negativo ? '-' : ''}${digitos}`)
   const hayEntrada = valorEntrada !== null
+
+  /*
+   * El menú se deriva en vez de fiarse del índice guardado a secas: la lista la
+   * manda quien nos usa y puede acortarse por debajo —al teclear el total a mano
+   * el desglose se descarta entero—, así que un índice que ya no existe tiene
+   * que dejar de contar sin pasar por un efecto.
+   */
+  const menu =
+    fichaTocada !== null && fichaTocada < importes.length
+      ? { indice: fichaTocada, importe: importes[fichaTocada]! }
+      : null
 
   if (!abierto) {
     return (
@@ -54,6 +73,7 @@ export function Sumador({ importes, onCambio }: Props) {
     onCambio([...importes, valorEntrada])
     setDigitos('')
     setNegativo(false)
+    setFichaTocada(null)
   }
 
   function doblarEntrada() {
@@ -63,13 +83,24 @@ export function Sumador({ importes, onCambio }: Props) {
     setDigitos(String(Math.abs(doblado)))
   }
 
+  /*
+   * El menú se queda abierto al doblar, así que un Premium sobre un plato ya
+   * doblado —×4— son dos toques en el mismo sitio. Al quitar se cierra, que la
+   * ficha ya no está.
+   */
+  function doblarCarta(indice: number) {
+    onCambio(doblarCartaEn(importes, indice))
+  }
+
   function quitarCarta(indice: number) {
-    onCambio(importes.filter((_, i) => i !== indice))
+    onCambio(quitarCartaEn(importes, indice))
+    setFichaTocada(null)
   }
 
   function cerrar() {
     setDigitos('')
     setNegativo(false)
+    setFichaTocada(null)
     setAbierto(false)
   }
 
@@ -88,19 +119,57 @@ export function Sumador({ importes, onCambio }: Props) {
         ) : (
           importes.map((importe, indice) => (
             <button
-              key={`${indice}-${importe}`}
+              // Por posición y no por posición e importe: doblar cambia el
+              // importe, y con la clave dentro se remontaría la ficha justo
+              // cuando el dedo está encima y el menú abierto.
+              key={indice}
               type="button"
-              className={
-                importe < 0 ? `${estilos.carta} ${estilos.cartaNegativa}` : estilos.carta
-              }
-              onClick={() => quitarCarta(indice)}
-              aria-label={`Quitar la carta de ${importe} euros`}
+              className={clases(
+                estilos.carta,
+                importe < 0 ? estilos.cartaNegativa : '',
+                menu?.indice === indice ? estilos.cartaTocada : '',
+              )}
+              onClick={() => setFichaTocada((actual) => (actual === indice ? null : indice))}
+              aria-expanded={menu?.indice === indice}
+              aria-label={`Carta de ${importe} euros: doblar o quitar`}
             >
-              {conSigno(importe)} €<span className={estilos.quitar} aria-hidden="true">×</span>
+              {conSigno(importe)} €
+              <span className={estilos.mas} aria-hidden="true">
+                ⋯
+              </span>
             </button>
           ))
         )}
       </div>
+
+      {/*
+        Menú de la ficha tocada. Antes, tocar una ficha la borraba en el acto, y
+        con eso no había forma de doblar una carta ya sumada: el ×2 solo actúa
+        sobre lo que se está tecleando. Quitar se queda con el peso visual porque
+        es lo que ya hacía el gesto, y quien viene de usar la app lo espera.
+      */}
+      {menu ? (
+        <div className={estilos.menu} role="group" aria-label={`Carta de ${menu.importe} euros`}>
+          <span className={estilos.menuRotulo}>
+            Carta de <strong className="cifra">{conSigno(menu.importe)} €</strong>
+          </span>
+          <div className={estilos.menuAcciones}>
+            <button
+              type="button"
+              className={`${estilos.tecla} ${estilos.teclaAuxiliar}`}
+              onClick={() => doblarCarta(menu.indice)}
+              // Premium sobre una carta ya puesta: dobla el importe, y si es un
+              // plato quemado dobla el descuento.
+              aria-label={`Doblar a ${duplicarImporte(menu.importe)} euros`}
+            >
+              ×2 Doblar
+            </button>
+            <button type="button" className={estilos.quitar} onClick={() => quitarCarta(menu.indice)}>
+              Quitar
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       <div className={estilos.pantalla}>
         <div>
@@ -176,11 +245,19 @@ export function Sumador({ importes, onCambio }: Props) {
       </div>
 
       <p className={estilos.pista}>
-        Toca una carta ya sumada para quitarla. El total va directo al campo de arriba. Un plato
-        quemado va con <strong>±</strong>: resta, y cuenta como carta.
+        Toca una carta ya sumada para doblarla o quitarla. El total va directo al campo de arriba. Un
+        plato quemado va con <strong>±</strong>: resta, y cuenta como carta.
       </p>
     </section>
   )
+}
+
+/**
+ * Junta clases saltándose las vacías, que si no quedan dobles espacios. Admite
+ * `undefined` porque con `noUncheckedIndexedAccess` los módulos CSS lo son.
+ */
+function clases(...nombres: (string | undefined)[]): string {
+  return nombres.filter(Boolean).join(' ')
 }
 
 function IconoSumar() {
