@@ -251,6 +251,58 @@ Nada de esto es asesoramiento jurídico: es la lista de lo que queda por atar. E
 
 ---
 
+## 11. Compartir la partida entre varios móviles
+
+**Hay que decidir primero qué significa "compartir". Una de las dos respuestas cabe sin tocar nada; la otra choca con los no-negociables igual que la publicidad.**
+
+Hoy la app está construida sobre una premisa que está escrita en el README: *un solo móvil que se pasa de mano en mano*. No es una limitación que se quedó sin hacer, es el diseño. Esto lo cambia, así que conviene separar dos cosas que se piden con la misma frase:
+
+| Qué se quiere | Qué hace falta |
+|---|---|
+| **Que los demás vean el marcador en su móvil** | Pasar el estado de un móvil a otro. Se puede hacer sin red. |
+| **Que cualquiera pueda cerrar una ronda desde el suyo** | Sincronización en vivo entre dispositivos. **Esto necesita un servidor.** |
+
+Mi lectura: lo que la gente quiere de verdad en la mesa es lo primero —ver cuánto le queda a cada uno sin pedir el móvil— y eso es diez veces más barato. Cerrar la ronda lo hace uno, igual que en el juego reparte uno.
+
+### Lo que el modelo ya regala
+
+Esto sale gratis de decisiones que ya están tomadas, y es mucho:
+
+- **Es event-sourced.** La única fuente de verdad es la lista ordenada de rondas; el dinero se deriva. Fusionar dos listas de rondas es un problema tratable. Fusionar dos saldos calculados no lo habría sido.
+- **Los identificadores son UUID de `crypto.randomUUID`** (`src/dominio/id.ts`). Son únicos entre dispositivos sin coordinar nada, así que dos móviles no van a chocar al crear rondas. El comentario del archivo dice que "nunca salen del dispositivo": eso deja de ser verdad el día que esto se haga, y habrá que reescribirlo.
+- **Una ronda es pequeña y cerrada**: pagador, total, propina, reparto y el aumento. No hay referencias a nada externo salvo ids de jugadores.
+
+### Lo que se rompería, y son tres cosas concretas
+
+1. **`Ronda.indice` no sobrevive a una fusión.** Hoy se recalcula por posición del array en `sincronizar` (`src/dominio/mutaciones.ts`). Dos móviles que cierren una ronda cada uno a la vez producen dos rondas con el mismo índice. Haría falta un orden explícito —una marca de tiempo, o un contador por dispositivo— en vez de la posición.
+2. **Corregir y borrar son mutaciones en el sitio.** `editarRonda` sustituye la ronda y `borrarRonda` la saca de la lista. Eso no converge: si dos móviles corrigen la misma ronda, no hay forma de saber cuál gana. Para fusionar habría que convertirlas en **eventos** —"la ronda X pasa a valer Y", con su autor y su contador— y quedarse con el último. Es el cambio de fondo, y es el que hay que decidir **antes** de que el historial de partidas de la gente crezca.
+3. **Los ids de los jugadores se crean en el móvil que abre la partida.** Así que el reparto solo puede ser **uno crea y los demás importan**, nunca "cada uno abre la suya y luego se juntan": el mismo Javier tendría dos ids distintos y sería imposible saber que es el mismo.
+
+### Los transportes, con lo que cuesta cada uno
+
+Medido, no estimado: una partida de 8 jugadores y 12 rondas, todas A pachas, pesa **6,9 KB** tal como se guarda, y **301 bytes** en forma compacta —los jugadores por su posición y A pachas como una máscara de bits—. En una URL son **460 caracteres**, que caben en un QR de los que una cámara lee de lejos.
+
+| Transporte | Respeta los no-negociables | El problema |
+|---|---|---|
+| **QR con la partida dentro** | **Sí, los cuatro** | Es una foto del estado, no una sesión. Un escaneo por ronda es peor que pasar el móvil. |
+| Web Bluetooth | Sí | **No existe en Safari de iOS.** Muerto en una mesa con iPhones. |
+| Web NFC | Sí | Solo Chrome en Android. Igual de muerto. |
+| WebRTC entre móviles | No | Necesita un servidor de señalización para intercambiar la SDP, y el wifi de un bar suele aislar a los clientes entre sí. |
+| Servidor propio mínimo | No | Ver abajo. |
+| Firebase, Supabase y compañía | No | Rompe cuatro no-negociables **y** mete un tercero. |
+
+El truco bueno del QR: **no hace falta ni cámara ni lector**. Un móvil enseña un QR con la URL de la app y la partida en el fragmento; la cámara nativa de cualquier móvil lee QRs y abre enlaces. Cero dependencias nuevas, cero permisos, cero peticiones si el otro móvil ya tiene la app cacheada. **Pero hay que probarlo en un iPhone antes de darlo por bueno**: iOS abre los enlaces en Safari y no en la app instalada, y Safari tiene su propio IndexedDB, así que la partida podría aterrizar en la copia del navegador y no en la app del icono. Si eso pasa, el QR sirve para mirar y no para seguir jugando.
+
+### Si lo que se quiere es la sesión en vivo
+
+Entonces hay servidor, no hay vuelta. Y toca la misma tabla que la publicidad: se acaban las cero peticiones salientes, se acaba el modo avión para la parte que sincroniza, el RGPD deja de ser trivial —los nombres son datos personales y saldrían del dispositivo— y hay que abrir el `connect-src` de la CSP, con lo que se cae la garantía técnica. Añade además coste y mantenimiento: Pages es estático y gratis, un relay no.
+
+La forma menos mala, si se toma esa decisión: **local-first con relay opcional**. La app sigue siendo completa y usable con cero red, y el relay —propio, sin cuentas, sin persistencia, sin registros— solo empuja rondas cuando hay wifi. Así el fallo degrada en vez de romper, que es como está resuelto todo lo demás en esta app. Pero que quede claro que es un cambio de naturaleza del proyecto, no una función más.
+
+**Decisión pendiente:** espejo de lectura por QR (compatible, barato, y hay que probarlo en un iPhone), sesión en vivo con relay propio (rompe dos no-negociables a sabiendas), o nada y seguir pasando el móvil. Si algún día va a ser lo segundo, el punto 2 de "lo que se rompería" —convertir correcciones y borrados en eventos— conviene hacerlo antes, aunque la sincronización venga mucho después.
+
+---
+
 ## Sin decidir, de antes
 
 Vienen del encargo original y siguen abiertas. Están explicadas en el [README](README.md).
