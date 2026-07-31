@@ -354,6 +354,57 @@ Encaja con lo que se quiere aquí: el marcador se queda compartido y a la vista.
 
 ---
 
+## 13. Ordenar el marcador por dinero
+
+**Choca con una decisión ya tomada, y hay una versión que da lo que se busca sin pagar su precio. Casi gratis.**
+
+La decisión está escrita en el código (`src/pantallas/Marcador.tsx`): *"El orden es siempre el de la mesa: nunca se reordena por dinero, que la posición baile confunde más que ayuda."* El motivo es el caso de uso: el móvil se pasa de mano en mano y cada uno **encuentra su fila por dónde está**. Con ocho filas y mala luz, una fila que se mueve entre rondas es una lectura equivocada, y aquí una lectura equivocada es una discusión sobre dinero.
+
+Lo que se gana ordenando es saber quién va ganando de un vistazo. Pero a mitad de partida esa no es la pregunta importante:
+
+**La partida termina cuando alguien se queda sin dinero.** O sea que el dato con tensión no es quién va primero, es **quién está a punto de caer**. Y ordenar de más a menos dinero deja justo a esa persona **en la última fila**, que es el sitio menos visible de la pantalla. Ordenar entierra la señal que importa.
+
+### La versión que sí, y son tres líneas
+
+Enseñar el **puesto** sin mover las filas. Y las dos piezas ya están hechas:
+
+- `clasificar` (`src/dominio/finPartida.ts`) ya devuelve `puestos` ordenado por dinero.
+- `FilaJugador` **ya acepta un `puesto`** y le pinta su medalla; hoy solo se usa en la clasificación final.
+
+Así que es mapear jugador → posición y pasarlo, dejando el orden de la mesa intacto. Se gana el ranking y no se pierde la costumbre de la fila.
+
+Lo que hay que mirar al hacerlo: el marcador es la pantalla más cargada que hay —nombre, cartas en mano, dinero— y una medalla más en cada fila puede ser ruido. Igual la medalla solo para el primero, o solo cuando hay más de una ronda jugada.
+
+**Y la señal que de verdad falta:** una marca para quien está más cerca de arruinarse. Hoy solo hay `sinAhorros`, que se enciende cuando ya ha pasado. Avisar antes es más útil que ordenar, y es lo mismo de barato.
+
+Si aun así se quiere el orden por dinero de verdad, que sea **un interruptor** y no el defecto, recordado como el tema. Pero conviene probar antes la medalla: es más barata y no rompe nada.
+
+---
+
+## 14. Enseñar el sentido de juego cuando cambia
+
+**Cabe, pero solo si es "hacia dónde vamos" y no "a quién le toca". Esas dos cosas son muy distintas de coste.**
+
+Está en la lista de fuera de alcance del README —*turnos*, junto con el estado de la mesa— así que de entrada hay que decidir si esto la abre. Mi lectura es que no, si se acota bien:
+
+| Qué | Qué cuesta |
+|---|---|
+| **A quién le toca** | Un toque **por turno**, y una ronda tiene un número indeterminado de turnos. La app no ve la mesa, así que se desincronizaría a la primera distracción y quedaría mintiendo. Esto sí es abrir "turnos", y es otra app. |
+| **Hacia dónde vamos** | Un toque **por cambio de sentido**, que pasan pocas veces. Eso es lo que se pierde de verdad: después de dos inversiones nadie se acuerda de por dónde iba. |
+
+A quién le toca ya lo sabe la mesa: se están mirando las caras. Lo que no sabe nadie es la dirección, así que **el objeto útil es una flecha y el orden de los sitios**, no un puntero de turno.
+
+Lo bueno es que la pieza que hace falta ya está: **el orden de los jugadores es el orden de la mesa**, y la app ya lo dice al crear la partida (*"El orden es el de la mesa y no cambia en toda la partida"*, en `NuevaPartida.tsx`). Así que un corro con una flecha es honesto sin pedir nada nuevo.
+
+Detalles a decidir antes de tocarlo:
+
+- **Dónde.** El sitio natural es el marcador, junto al título de la ronda. Cuidado con que no compita con *Cerrar ronda*, que es la acción primaria y se busca con el pulgar sin mirar.
+- **¿El sentido vuelve a la normalidad al cambiar de bar?** Cada ronda es un bar nuevo, así que lo razonable es que sí, pero eso es una pregunta de reglas y hay que mirarla en el reglamento, igual que la del punto 12.
+- **Dónde vive el dato.** Esto es **estado de mesa, no contabilidad**, así que no debería entrar en el registro de la `Partida`: metería por la puerta de atrás justo lo que se dejó fuera, y arrastraría migración por `esPartidaValida`. Lo coherente es que viva aparte y que **no sea historia**: si se recarga, se pierde, y no pasa nada porque la mesa lo sabe.
+- **Cuántas cartas de cambio de sentido hay y qué hacen exactamente**: no lo he podido comprobar. El catálogo de cartas está fuera de alcance a propósito y el reglamento no se ha podido leer desde aquí (403 en todos los sitios que lo alojan).
+
+---
+
 ## Sin decidir, de antes
 
 Vienen del encargo original y siguen abiertas. Están explicadas en el [README](README.md).
