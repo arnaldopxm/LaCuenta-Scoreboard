@@ -275,7 +275,7 @@ Esto sale gratis de decisiones que ya están tomadas, y es mucho:
 ### Lo que se rompería, y son tres cosas concretas
 
 1. **`Ronda.indice` no sobrevive a una fusión.** Hoy se recalcula por posición del array en `sincronizar` (`src/dominio/mutaciones.ts`). Dos móviles que cierren una ronda cada uno a la vez producen dos rondas con el mismo índice. Haría falta un orden explícito —una marca de tiempo, o un contador por dispositivo— en vez de la posición.
-2. **Corregir y borrar son mutaciones en el sitio.** `editarRonda` sustituye la ronda y `borrarRonda` la saca de la lista. Eso no converge: si dos móviles corrigen la misma ronda, no hay forma de saber cuál gana. Para fusionar habría que convertirlas en **eventos** —"la ronda X pasa a valer Y", con su autor y su contador— y quedarse con el último. Es el cambio de fondo, y es el que hay que decidir **antes** de que el historial de partidas de la gente crezca.
+2. **Corregir y borrar son mutaciones en el sitio.** `editarRonda` sustituye la ronda y `borrarRonda` la saca de la lista. Eso no converge: si dos móviles corrigen la misma ronda, no hay forma de saber cuál gana. Para fusionar habría que convertirlas en **eventos** —"la ronda X pasa a valer Y", con su autor y su contador— y quedarse con el último. Es el cambio de fondo, y es el que hay que decidir **antes** de que el historial de partidas de la gente crezca. *El punto 12 desactiva casi todo este problema: si cada móvil solo puede escribir lo suyo, "gana el último del dueño" es una regla sin ambigüedad.*
 3. **Los ids de los jugadores se crean en el móvil que abre la partida.** Así que el reparto solo puede ser **uno crea y los demás importan**, nunca "cada uno abre la suya y luego se juntan": el mismo Javier tendría dos ids distintos y sería imposible saber que es el mismo.
 
 ### Los transportes, con lo que cuesta cada uno
@@ -301,57 +301,60 @@ La forma menos mala, si se toma esa decisión: **local-first con relay opcional*
 
 **Decisión pendiente:** espejo de lectura por QR (compatible, barato, y hay que probarlo en un iPhone), sesión en vivo con relay propio (rompe dos no-negociables a sabiendas), o nada y seguir pasando el móvil. Si algún día va a ser lo segundo, el punto 2 de "lo que se rompería" —convertir correcciones y borrados en eventos— conviene hacerlo antes, aunque la sincronización venga mucho después.
 
+**Sigue en el punto 12**, que es lo que se quiere de verdad y abarata la opción del relay: estado compartido con el permiso de escritura acotado a cada jugador.
+
 ---
 
-## 12. Que cada uno maneje solo su puntuación, y sea pseudo-privada
+## 12. Estado compartido, y cada uno con la opción de editar solo su cuenta
 
-**Depende del punto 11 para la parte de editar. La parte de ver se puede hacer sin servidor. Y antes que nada, la pregunta de reglas, que está medio contestada.**
+**Depende del punto 11 para el transporte. Pero resuelve gratis lo más difícil de ese punto, así que conviene leerlos juntos.**
 
-### ¿Las reglas dicen si el dinero es público o privado?
+Lo que se quiere: **una sola verdad que todos ven** —el marcador sigue siendo compartido y auditable, nada se esconde— y que cada persona que escanee el QR pueda, **si quiere**, manejar su propia cuenta desde su móvil. Ni reparto de la información, ni marcadores privados: reparto del **permiso de escritura**.
 
-**Lo que se ha podido comprobar:** el contenido de la caja son **100 cartas y 20 fichas de aumento**. No hay dinero, ni monedas, ni bloc de puntuación. Eso sale igual en la ficha de la editorial y en todas las reseñas ([2Tomatoes](https://2tomatoesgames.com/es/la-cuenta-8437027014796.html), [Gameplay Mini](https://gameplaymini.com/la-cuenta-juego-de-mesa-2-tomatoes/), [JuegameStore](https://www.juegamestore.es/blogs/noticias/resena-la-cuenta), [The Opinionated Gamers](https://opinionatedgamers.com/2025/11/28/dale-yu-review-of-la-cuenta/)).
+### Por qué esto es más fácil de sincronizar, y no más difícil
 
-De ahí sale la conclusión, que es una **inferencia y no una cita**: si el juego no reparte dinero, tampoco define cómo se esconde. La contabilidad la lleva quien juega, con lo que tenga a mano —una servilleta, o esta app—, y por eso existe esto. Así que "compartida o privada" es muy probablemente **otro hueco del reglamento**, de la misma familia que el recorte a cero del punto 9 de decisiones abiertas.
+Es la parte que no se ve a primera vista. El problema gordo de sincronizar dos móviles es que los dos escriban en lo mismo y haya que decidir quién gana. **Acotar a cada uno a su cuenta elimina ese problema de raíz**: si un móvil solo puede escribir lo suyo, dos móviles nunca se pisan.
 
-Y las dos reglas que sí están escritas empujan hacia **público**:
+Con eso, fusionar deja de ser un CRDT y pasa a ser **la unión de N registros con un solo escritor cada uno**, que es el único caso que se fusiona sin ceremonia. Y el punto 2 de "lo que se rompería" del punto 11 —que corregir y borrar mutan en el sitio y eso no converge— se cae solo: si solo el dueño toca lo suyo, "gana el último del dueño" es una regla sin ambigüedad.
 
-- **La partida termina en el momento en que alguien se queda sin dinero.** Para que eso pare la partida, la mesa tiene que saber que ha pasado.
-- **Gana quien más dinero le quede, y el desempate se resuelve por el dinero que lleves encima** —el de verdad, en el bolsillo—. Las cifras se comparan en voz alta al acabar. (Este desempate ya está en las dudas frecuentes de la app.)
+Dicho de otra forma: **el reparto de permisos ES la estrategia de fusión.** Sale más barato que el "todos escriben todo" que estaba planteado en el punto 11.
 
-**Lo que NO se ha podido comprobar:** el reglamento en sí. Los sitios que lo tienen devuelven 403 a la herramienta de descarga, así que **queda pendiente mirarlo con la caja delante**. Son treinta segundos y lo cierra: buscar si hay una instrucción de *anotad* los ahorros, si menciona una hoja de puntuación, y si en algún sitio dice *en secreto* o *sin que los demás lo vean*. Si aparece cualquiera de las tres, esta entrada cambia.
+### Cómo encaja en el modelo que ya hay
 
-**Mientras no se compruebe, la app está bien como está:** el marcador enseña el dinero de todos a todos, y el inicio dice quién va ganando.
+La clave es que **cada evento tenga un dueño**, y el modelo ya lo tiene medio hecho:
 
-### El problema de fondo: lo que pasa en una ronda es público por construcción
+- **Una ronda ya tiene dueño: `pagadorId`.** Quien pide la cuenta es quien la paga, así que la ronda es su evento y la escribe su móvil. Que A pachas o A medias muevan el dinero de otros no rompe el reparto: eso lo hace **la regla**, no la persona, y la regla la puede comprobar cualquiera mirando el marcador.
+- **Falta un evento nuevo: el ajuste.** "Fulano corrige su cuenta en −5 €", con su autor. Es lo que da de verdad la capacidad que se pide —arreglar *mi* número cuando la app se equivocó, sin tocar el tuyo— y **encaja en event-sourcing sin romperlo**: es un evento más en la lista, no un saldo guardado. Sin esto, "editar mi cuenta" no tiene dónde aterrizar, porque hoy el dinero no se guarda, se deriva.
+- **Unirse es reclamar un jugador.** Al escanear el QR eliges tu nombre de la lista, y ese es tu permiso de escritura. Encaja con que los ids de jugador los cree el móvil que abre la partida: uno crea, los demás se identifican.
 
-Esto no es una cuestión de reglas, es de mecánica. La cuenta sale de las cartas de la mesa, que las ve todo el mundo, y quién la parte lo deciden cartas públicas —A medias, A pachas—. O sea que **el hecho ya es público antes de tocar ningún móvil**. Dos consecuencias:
+### Lo que sigue siendo difícil, y es una sola cosa
 
-1. **Si cada uno solo puede editar lo suyo, el mismo hecho hay que teclearlo N veces**, una por persona. Más trabajo que pasar el móvil, y N sitios donde equivocarse en vez de uno.
-2. **Se pierde la auditoría.** Hoy el marcador es una verdad única que todos pueden mirar; si cada uno maneja su cifra, nadie puede comprobar a nadie y darse dinero a uno mismo es invisible. En una mesa de bar eso puede ser la gracia o puede ser la discusión de la noche, pero **es una decisión que hay que tomar a sabiendas**, no un efecto colateral.
+**El fin de partida depende del orden global.** La derivación para en seco en la primera ronda que arruina a alguien (`derivarEstado.ts`), así que hace falta un orden total entre eventos de móviles distintos —una marca de tiempo, o un contador tipo Lamport—, no solo un orden dentro de cada registro. Es el único sitio donde los registros por jugador no se pueden mirar por separado, y es donde hay que pensar de verdad.
 
-### Lo que probablemente se quiere de verdad, y es más barato
+El `Ronda.indice` de hoy no sirve para eso: se recalcula por posición del array en `sincronizar`, y esa posición deja de existir cuando la lista viene de tres móviles.
 
-No "cada uno dueño de su cifra", sino **cada uno ve la suya y no la de los demás**. Eso es una vista, no un reparto de propiedad, y sale mucho más barato. Además tiene una propiedad bonita: **la privacidad es más fácil que compartir, porque hay que mandar menos**.
+### Y lo que no desaparece
 
-Los ahorros de un jugador solo dependen de lo que ha pagado él (`aplicarPago` es por jugador), así que a cada móvil le basta con **las rondas en las que pagó ese jugador**: suficiente para calcular su dinero, insuficiente para calcular el de los demás. Un QR por persona, sin servidor, sin red.
+**Sigue haciendo falta transporte.** Acotar los permisos hace la fusión trivial, pero no mueve los bytes de un móvil a otro. Eso es el punto 11 y su decisión sin tomar:
 
-Dos avisos sobre eso:
+- **Con QR esto no vive:** cada edición ajena tendría que volver escaneándose, y una partida son decenas de idas y venidas.
+- **Con un relay propio sí**, y ahora el relay puede ser **tonto**: una cola de eventos por partida, sin lógica de conflictos, sin cuentas, sin persistencia más allá de la partida. Que la fusión sea trivial hace el servidor mucho más pequeño de lo que estaba planteado.
 
-- **El corte de fin de partida es global.** La derivación para en seco en la primera ronda que arruina a alguien (`derivarEstado.ts`), y eso no se puede reproducir desde un trozo: el móvil que lleva la partida tiene que mandar además "esto terminó en la ronda N". Sin eso, un móvil con su rebanada calcularía dinero de rondas que no se jugaron.
-- **Sigue siendo pseudo, y el nombre está bien puesto:** el móvil que teclea las rondas lo sabe todo por definición. Alguien tiene que ver la mesa.
+O sea que esto **no** es una alternativa al punto 11: es lo que hace que la versión con servidor sea barata. Lo que se paga sigue siendo lo de allí: cero peticiones salientes, el modo avión en la parte que sincroniza, el RGPD y abrir el `connect-src` de la CSP.
 
-### Qué depende de qué
+### Lo de "pseudo privada", ya cerrado
 
-| Lo que se quiere | Qué hace falta |
-|---|---|
-| Cada uno **ve** solo lo suyo | Un QR por jugador con su rebanada. **Sin servidor.** Se puede hacer hoy. |
-| Cada uno **edita** lo suyo desde su móvil | Escritura desde varios dispositivos, o sea la sincronización en vivo del punto 11: **servidor**, y los tres arreglos del modelo que están listados allí. |
+Había que validar contra las instrucciones si la puntuación de cada uno es compartida o privada. La caja lleva **100 cartas y 20 fichas de aumento**, y ni dinero, ni monedas, ni bloc de puntuación ([2Tomatoes](https://2tomatoesgames.com/es/la-cuenta-8437027014796.html), [Gameplay Mini](https://gameplaymini.com/la-cuenta-juego-de-mesa-2-tomatoes/), [The Opinionated Gamers](https://opinionatedgamers.com/2025/11/28/dale-yu-review-of-la-cuenta/)). Si el juego no reparte dinero, tampoco define cómo se esconde: **es otro hueco del reglamento**, de la familia del recorte a cero. Y las dos reglas que sí están escritas empujan a público: la partida termina en el momento en que alguien se queda sin dinero, y gana quien más le quede con desempate por el dinero que lleves encima.
 
-**Decisión pendiente**, y en este orden:
+Encaja con lo que se quiere aquí: el marcador se queda compartido y a la vista. **Lo acotado es quién puede tocar qué, no quién puede ver qué.**
 
-1. **Mirar el reglamento** con la caja delante, que es lo único que puede tumbar todo lo demás.
-2. Si el dinero es público, esto se queda en una **vista opcional** —un "modo privado" para cuando el móvil se pasa de mano en mano— y no en un cambio de modelo.
-3. Si de verdad se quiere que cada uno edite lo suyo, entonces primero hay que decidir el punto 11, y aceptar que se pierde la auditoría de la mesa.
+*Inferencia, no cita: el reglamento en sí no se ha podido leer —los sitios que lo alojan devuelven 403—. Con la caja delante se cierra en treinta segundos: buscar si dice* anotad *los ahorros, si menciona una hoja de puntuación, y si en algún sitio pone* en secreto*. Si aparece alguna de las tres, esto se revisa.*
+
+**Decisión pendiente:** la del punto 11, porque sin transporte esto no existe. Lo que sí se puede hacer ya, y aprovecha igual con un solo móvil, es **el evento de ajuste**: es el que da "arreglo mi cuenta sin tocar la tuya", hoy no existe, y es la pieza que esto necesita del modelo.
+
+---
+
+## Sin decidir, de antes
 
 Vienen del encargo original y siguen abiertas. Están explicadas en el [README](README.md).
 
