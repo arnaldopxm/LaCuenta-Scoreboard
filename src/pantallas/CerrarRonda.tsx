@@ -8,7 +8,7 @@ import { LineaTicket, SeparadorTicket, Ticket } from '../componentes/Ticket.tsx'
 import {
   LIMITE_MANO_MAX,
   concedeAumento,
-  cuentaDeSumandos,
+  cuentaDeCartas,
   derivar,
   estadosDePartida,
   limiteMano,
@@ -16,9 +16,10 @@ import {
   parsearImporteConSigno,
   previsualizarRonda,
   puedeAumentar,
-  sumarImportes,
+  sumarCartas,
   validarBorrador,
   type BorradorRonda,
+  type CartaSumada,
   type Partida,
   type Reparto,
   type Ronda,
@@ -66,7 +67,7 @@ export function CerrarRonda({ partida, rondaEditada, onAtras, onConfirmar }: Pro
    * manda siempre es la del campo. Si se teclea el total a mano, el desglose
    * deja de corresponderse y se descarta, para no enseñar dos verdades.
    */
-  const [cartasSumadas, setCartasSumadas] = useState<number[]>([])
+  const [cartasSumadas, setCartasSumadas] = useState<CartaSumada[]>([])
 
   /**
    * Una sola casilla para el aumento de mano, marcada por defecto.
@@ -166,9 +167,9 @@ export function CerrarRonda({ partida, rondaEditada, onAtras, onConfirmar }: Pro
     return derivar(partida.jugadores, rondasCorregidas).rondasIgnoradas.length
   }, [borrador, listo, partida, rondaEditada])
 
-  function cambiarSumadas(siguientes: number[]) {
+  function cambiarSumadas(siguientes: CartaSumada[]) {
     setCartasSumadas(siguientes)
-    setTotal(siguientes.length === 0 ? '' : String(sumarImportes(siguientes)))
+    setTotal(siguientes.length === 0 ? '' : String(sumarCartas(siguientes)))
   }
 
   function cambiarTotalAMano(texto: string) {
@@ -236,7 +237,7 @@ export function CerrarRonda({ partida, rondaEditada, onAtras, onConfirmar }: Pro
           ayuda="Lo que suman los platos y bebidas de la mesa. Puede salir negativo: los platos quemados restan."
           permiteSigno
         />
-        <Sumador importes={cartasSumadas} onCambio={cambiarSumadas} />
+        <Sumador cartas={cartasSumadas} onCambio={cambiarSumadas} />
       </section>
 
       {/*
@@ -318,7 +319,7 @@ export function CerrarRonda({ partida, rondaEditada, onAtras, onConfirmar }: Pro
               minimoCartas: partida.jugadores.length,
               // Pista, no decisión: la app no ve la mesa, así que las cartas las
               // sigue confirmando quien está jugando.
-              cartasEnSumador: cartasSumadas.length > 0 ? cuentaDeSumandos(cartasSumadas) : null,
+              cartasEnSumador: cartasSumadas.length > 0 ? cuentaDeCartas(cartasSumadas) : null,
             })}
           >
             +1 al límite de mano

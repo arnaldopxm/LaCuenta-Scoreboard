@@ -14,19 +14,28 @@ Antes, tocar una ficha ya sumada la quitaba en el acto. El `×2` de Premium solo
 
 Cómo quedaron los detalles que había que respetar:
 
-- **Doblar pasa por `duplicarImporte`**, así que el signo y el tope los sigue gobernando un solo sitio: un plato quemado de −15 dobla a −30. El total del campo se recalcula solo, porque sale de `sumarImportes` sobre la lista.
-- **El menú se queda abierto al doblar**, que no estaba previsto y sale gratis: un Premium sobre un plato ya doblado —×4— son dos toques en el mismo sitio. Al quitar se cierra, que la ficha ya no está.
+- **Doblar pasa por `duplicarImporte`**, así que el signo y el tope los sigue gobernando un solo sitio: un plato quemado de −15 cuenta −30. El total del campo se recalcula solo, porque sale de `sumarCartas` sobre la lista.
 - **Pulsables de 48 px**, y los dos botones igualados en alto por la rejilla.
-- **Quitar conserva el peso visual**: más ancho que Doblar y con el color de peligro, porque es lo que hacía el gesto de siempre. La cruz de la ficha pasó a ser `⋯`, que es lo honesto cuando tocar abre opciones en vez de borrar.
-
-Dos cosas que aparecieron al hacerlo:
-
+- **Quitar conserva el peso visual**: más ancho que Doblar y con el color de peligro, porque es lo que hacía el gesto de siempre. La cruz de la ficha pasó a ser `⋯`, que es lo honesto cuando tocar abre opciones en vez de borrar. El color de Quitar va en el texto y el borde, no en el fondo: en oscuro `--peligro` se aclara tanto que el texto crema encima no se leería.
 - **El menú va debajo de la fila de fichas, no flotando junto a la que se toca.** Con ocho fichas envolviendo en dos líneas, un desplegable anclado a la última se sale de la pantalla por la derecha. Lo que lo ata a su carta es el recuadro de la ficha tocada más el rótulo del menú.
-- **La operación sobre la lista se fue al dominio** (`doblarCartaEn`, `quitarCartaEn` en `src/dominio/sumador.ts`), que es la única capa con tests: los componentes no se renderizan en los tests. Ahí está también el caso raro que sí pasa —el índice que tenía el menú abierto puede dejar de existir, porque teclear el total a mano descarta el desglose entero—, resuelto derivando el menú en vez de guardar el índice a secas.
 
-El color de Quitar va en el texto y el borde, no en el fondo: en oscuro `--peligro` se aclara tanto que el texto crema encima no se leería.
+### La primera versión doblaba el número, y estaba mal
 
-Archivos: `src/dominio/sumador.ts`, `src/componentes/Sumador.tsx`, `Sumador.module.css`. Se comprueba de punta a punta en `npm run verificar:offline`: doblar la ficha de 12 con otra de 8 deja 32 € en el campo, y quitarla deja 8 €.
+Salió al probarlo en el móvil: **se podía doblar la misma carta una y otra vez** —×4, ×8, sin tope— y **el ×2 no se veía en ninguna parte**. Dos síntomas de la misma causa: doblar era una multiplicación destructiva, así que una ficha de 24 € podía venir de un plato de 24 o de uno de 12 doblado, y no había forma ni de saberlo ni de deshacerlo. El `×2` del teclado tenía el mismo agujero: pulsado tres veces dejaba un ×8 sin rastro.
+
+Ahora el Premium es **estado de la carta** y no aritmética (`CartaSumada` en `src/dominio/sumador.ts`): cada carta guarda lo que dice en la mesa y si lleva Premium encima.
+
+- **No se puede apilar.** Puesto el doble, el botón del menú pasa a *Quitar el doble*. Interruptor, no multiplicación: en la mesa una carta lleva Premium o no lo lleva.
+- **Se ve.** La ficha enseña lo que la carta **cuenta** —24 €, para que las fichas sumen el total que está justo al lado— con un **sello `×2`** que explica de dónde sale. El menú lo dice con palabras: *Carta de 12 €, doblada a 24 €*.
+- **Un solo concepto en los dos sitios.** El `×2` del teclado es ahora un interruptor como el `±`, y la pantalla enseña la cuenta hecha debajo de la cifra tecleada: **30** y *×2 = 60 €*. Se puede pulsar antes de teclear el importe.
+- **El Premium no añade una carta al recuento del aumento de mano**: dobla los euros de una que ya está en la mesa, y la regla cuenta cartas.
+- El relleno mostaza sólido está cogido por *Añadir carta* y por el sello, así que los interruptores puestos van **teñidos** de mostaza y no rellenos: pegados y con el mismo relleno, la acción primaria y el `×2` se leían como un solo bloque.
+
+**La operación sobre la lista vive en el dominio** (`alternarDobleEn`, `quitarCartaEn`), que es la única capa con tests: los componentes no se renderizan en los tests. Ahí está también el caso raro que sí pasa —el índice que tenía el menú abierto puede dejar de existir, porque teclear el total a mano descarta el desglose entero—, resuelto derivando el menú en vez de guardar el índice a secas.
+
+Nada de esto se persiste: el desglose es un borrador de la pantalla de cerrar ronda, y lo que se guarda en la ronda es el total. Así que el cambio de modelo no arrastró migración ninguna.
+
+Archivos: `src/dominio/sumador.ts`, `src/componentes/Sumador.tsx`, `Sumador.module.css`, `src/pantallas/CerrarRonda.tsx`. Se comprueba de punta a punta en `npm run verificar:offline`: doblar la ficha de 12 con otra de 8 deja 32 € en el campo, el botón de doblar desaparece mientras el doble está puesto, la ficha enseña el sello, quitar el doble vuelve a 20 € y quitar la carta deja 8 €.
 
 ---
 
@@ -56,7 +65,7 @@ Correcto. La propina se suma al total **antes** del recorte a cero. Con las cart
 
 ### Añadí una carta y luego me acordé del Premium
 
-Toca la ficha de esa carta en el sumador y elige **Doblar**. El `×2` del teclado solo afecta a la carta que estás tecleando; para una ya sumada, el menú de la ficha. Ahí mismo está **Quitar**.
+Toca la ficha de esa carta y elige **Doblar**: queda con un sello `×2` y enseña lo que cuenta ya doblado. Si te has equivocado, ese mismo botón pasa a **Quitar el doble**. No se puede doblar dos veces, porque una carta lleva Premium o no lo lleva. Y si te acuerdas *antes* de añadirla, el `×2` del teclado se queda pulsado y la pantalla enseña la cuenta hecha.
 
 ### El +1 al límite de mano viene marcado sin que yo lo pida
 

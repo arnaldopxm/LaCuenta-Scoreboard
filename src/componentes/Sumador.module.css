@@ -88,6 +88,22 @@
   font-size: 0.9rem;
 }
 
+/*
+ * El sello de Premium. Es lo que explica que una ficha de 24 € viniera de una
+ * carta de 12: sin él, doblar era una operación sin rastro y no había forma de
+ * revisar lo cantado. Va en mostaza porque es una marca puesta encima, como un
+ * sello en un ticket, no parte de la cifra.
+ */
+.sello {
+  padding: 0 5px;
+  border-radius: var(--radio-s);
+  background: var(--mostaza);
+  color: #1e1a17;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
 /* Puntos suspensivos y no una cruz: tocar la ficha abre opciones, no borra. */
 .mas {
   font-size: 1.1rem;
@@ -195,6 +211,15 @@
   color: #ef8f78;
 }
 
+/* La cuenta hecha del ×2, debajo de la cifra tecleada y en pequeño. */
+.dobleEntrada {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--mostaza);
+}
+
 /* --- Teclado --- */
 
 .teclado {
@@ -237,6 +262,30 @@
 .teclaSigno[aria-pressed='true'] {
   background: var(--peligro);
   color: #f7ebd5;
+}
+
+/*
+ * El ×2, interruptor como el signo. Pulsado se pinta en mostaza, el mismo color
+ * del sello de las fichas dobladas: es la misma cosa en los dos sitios. Mostaza
+ * con tinta oscura contrasta igual de bien en los dos temas.
+ */
+.teclaDoble {
+  background: var(--superficie);
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+/*
+ * Puesto se tiñe de mostaza, no se rellena: el relleno mostaza sólido está
+ * cogido por "Añadir carta", que está justo al lado, y por el sello de las
+ * fichas. Con los dos rellenos iguales y pegados, la acción primaria y el
+ * interruptor se leían como un solo bloque.
+ */
+.teclaDoble[aria-pressed='true'],
+.doblePuesto[aria-pressed='true'] {
+  border-color: var(--mostaza);
+  background: color-mix(in srgb, var(--mostaza) 34%, var(--superficie));
+  color: var(--tinta);
 }
 
 /* Doblar y añadir, con el peso visual donde toca. */

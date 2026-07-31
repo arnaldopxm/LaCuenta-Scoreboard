@@ -247,14 +247,45 @@ await sumador.getByRole('button', { name: '8', exact: true }).click()
 await sumador.getByRole('button', { name: 'Añadir carta' }).click()
 
 await sumador.getByRole('button', { name: /^Carta de 12 euros/ }).click()
-await sumador.getByRole('button', { name: /^Doblar a / }).click()
+await sumador.getByRole('button', { name: '×2 Doblar' }).click()
 comprobar(
   'Doblar una ficha ya sumada rehace el total',
   (await campoTotal.inputValue()) === '32',
   `12 doblado + 8 → ${await campoTotal.inputValue()} €`,
 )
 
-// Exacto: el nombre de cada ficha acaba en "doblar o quitar" y las cazaría.
+/*
+ * El doble es un interruptor y no una multiplicación: con "Doblar" siempre a
+ * mano se podía apilar un ×4 —y un ×8— que en la mesa no existe. Puesto el
+ * Premium, el botón pasa a quitarlo y el de doblar ya no está.
+ */
+const quitarDoble = sumador.getByRole('button', { name: 'Quitar el doble' })
+comprobar(
+  'El doble no se puede apilar: el botón pasa a quitarlo',
+  (await quitarDoble.count()) === 1 &&
+    (await sumador.getByRole('button', { name: '×2 Doblar' }).count()) === 0,
+)
+
+/*
+ * Y se ve: la ficha enseña lo que la carta cuenta más el sello, no un 24 pelado
+ * del que no se sabe si era un plato de 24 o uno de 12 doblado.
+ */
+const fichaDoblada = await sumador
+  .getByRole('button', { name: /^Carta de 12 euros doblada/ })
+  .innerText()
+comprobar(
+  'La ficha doblada lo enseña: el importe que cuenta y el sello ×2',
+  fichaDoblada.includes('24') && fichaDoblada.includes('×2'),
+  fichaDoblada.replace(/\s+/g, ' ').trim(),
+)
+
+await quitarDoble.click()
+comprobar(
+  'Quitar el doble devuelve la carta a lo que dice en la mesa',
+  (await campoTotal.inputValue()) === '20',
+  `12 + 8 → ${await campoTotal.inputValue()} €`,
+)
+
 await sumador.getByRole('button', { name: 'Quitar', exact: true }).click()
 comprobar('Quitar desde el menú de la ficha saca solo esa carta', (await campoTotal.inputValue()) === '8')
 await sumador.getByRole('button', { name: 'Cerrar' }).click()
