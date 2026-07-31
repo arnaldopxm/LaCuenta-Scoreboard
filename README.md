@@ -25,7 +25,7 @@ npm run preview      # sirve dist/ como en producción
 ## Cómo pasar los tests
 
 ```bash
-npm test             # los 190 tests del dominio, la persistencia y el PWA
+npm test             # los 197 tests del dominio, la persistencia y el PWA
 npm run test:watch
 npm run typecheck    # app y service worker, cada uno con su tsconfig
 ```
@@ -40,7 +40,7 @@ npm run verificar:offline
 
 Levanta un servidor estático con `dist/`, abre Chromium, instala el service worker, juega una partida, **corta la red del navegador**, recarga y comprueba que todo siga en pie. También vigila que no salga ni una petición fuera del origen.
 
-Las veintiséis comprobaciones que hace:
+Las veintinueve comprobaciones que hace:
 
 | Comprobación | Qué verifica |
 |---|---|
@@ -51,6 +51,9 @@ Las veintiséis comprobaciones que hace:
 | El wizard de instalación se abre desde el inicio | Y enseña uno de los tres caminos, nunca ninguno |
 | Las dudas frecuentes se abren desde el inicio | Y al tocar una pregunta se lee la respuesta |
 | Doblar una ficha ya sumada rehace el total | 12 doblado + 8 → 32 € en el campo |
+| El doble no se puede apilar | Puesto el Premium, el botón pasa a quitarlo y el de doblar ya no está |
+| La ficha doblada lo enseña | El importe que cuenta y el sello `×2` |
+| Quitar el doble devuelve la carta a lo que dice en la mesa | Vuelven a ser 20 € |
 | Quitar desde el menú de la ficha saca solo esa carta | Quedan 8 € |
 | El aumento de mano viene marcado por defecto | El caso normal no cuesta ningún toque |
 | Previsualización con redondeo al alza | 141 € entre 4 → 36 € cada uno |
@@ -223,16 +226,22 @@ El precio de ese defecto es que el marcador asume algo que no ha visto, así que
 
 La regla sigue teniendo sus dos condiciones separadas en `concedeAumento` (`src/dominio/reglas.ts`), que es donde le corresponde estar: lo que se ha juntado es la forma de preguntarlo, no la regla.
 
-### Tocar una ficha del sumador abre un menú, ya no borra
+### El Premium es un estado de la carta, no una multiplicación
 
-El sumador de cartas tiene teclado propio —el del sistema tapa media pantalla y no trae un menos, y los platos quemados restan— y va dejando cada carta como una ficha. **Tocar una ficha abre un menú con Doblar y Quitar.**
+El sumador de cartas tiene teclado propio —el del sistema tapa media pantalla y no trae un menos, y los platos quemados restan— y va dejando cada carta como una ficha. **Tocar una ficha abre un menú con Doblar y Quitar**, porque antes la borraba en el acto y eso dejaba fuera un caso normal: si añadías el plato y *luego* te acordabas del Premium, había que quitarlo y volver a meterlo.
 
-Antes la borraba en el acto, y eso dejaba fuera un caso normal: el `×2` de Premium solo actúa sobre la carta que estás tecleando, así que si añadías el plato y *luego* te acordabas del Premium había que quitarlo y volver a meterlo. Ahora se dobla en el sitio, y doblar dos veces multiplica por cuatro sin cerrar el menú.
+Lo que se dobla, eso sí, **no es el número: es la carta**. Cada carta del sumador guarda lo que dice en la mesa y si lleva Premium encima (`CartaSumada` en `src/dominio/sumador.ts`). Aplicar el doble al importe, que fue la primera versión, tenía dos agujeros:
 
-Dos detalles del cambio:
+- **Se podía apilar.** Doblar dos veces daba un ×4, y tres un ×8, cuando en la mesa una carta lleva Premium o no lo lleva. Ahora es un interruptor: puesto el doble, el botón pasa a *Quitar el doble* y no hay forma de acumular.
+- **No dejaba rastro.** Una ficha de 24 € podía ser un plato de 24 o uno de 12 doblado, así que no había manera de revisar lo cantado ni de deshacerlo. Ahora la ficha enseña lo que la carta **cuenta** —24 €, para que las fichas sumen el total que se ve al lado— con un **sello `×2`** que explica de dónde sale, y el menú lo dice con palabras: *Carta de 12 €, doblada a 24 €*.
+
+El mismo interruptor gobierna el `×2` del teclado, que antes multiplicaba lo tecleado y también se podía pulsar tres veces. Ahora se queda pulsado como el `±`, y la pantalla enseña la cuenta hecha debajo de la cifra: **30** y *×2 = 60 €*. Un solo concepto de "esta carta lleva Premium", en los dos sitios donde se pone.
+
+Tres detalles más:
 
 - **Quitar conserva el peso visual** —más ancho y con el color de peligro— porque es lo que hacía el gesto de siempre, y quien ya usaba la app lo espera ahí.
-- Doblar pasa por `duplicarImporte`, así que el signo y el tope los sigue gobernando un solo sitio: un plato quemado de −15 dobla a −30. El total no se guarda, sale de `sumarImportes` sobre la lista, así que se recalcula solo. Las dos operaciones sobre la lista viven en el dominio (`doblarCartaEn`, `quitarCartaEn`) y tienen tests.
+- El doble pasa por `duplicarImporte`, así que el signo y el tope los sigue gobernando un solo sitio: un plato quemado de −15 cuenta −30. El total no se guarda, sale de `sumarCartas` sobre la lista, así que se recalcula solo. El Premium **no** añade una carta al recuento del aumento de mano: dobla los euros de una que ya está.
+- El relleno mostaza sólido está cogido por *Añadir carta* y por el sello, así que los interruptores puestos van **teñidos** de mostaza y no rellenos. Con los dos rellenos iguales y pegados, la acción primaria y el `×2` se leían como un solo bloque.
 
 El menú se ata a su carta con el recuadro de la ficha y un rótulo, y no flotando junto a ella: con ocho fichas envolviendo en dos líneas, un desplegable anclado a la última se sale de la pantalla por la derecha.
 

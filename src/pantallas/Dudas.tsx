@@ -46,9 +46,11 @@ export function Dudas({ onAtras }: Props) {
         </Duda>
 
         <Duda pregunta="Añadí una carta y luego me acordé del Premium">
-          Toca la ficha de esa carta en el sumador y elige <strong>Doblar</strong>. El{' '}
-          <strong>×2</strong> del teclado solo afecta a la carta que estás tecleando; para una ya
-          sumada, el menú de la ficha. Ahí mismo está <strong>Quitar</strong>.
+          Toca la ficha de esa carta y elige <strong>Doblar</strong>: queda con un sello{' '}
+          <strong>×2</strong> y enseña lo que cuenta ya doblado. Si te has equivocado, ese mismo
+          botón pasa a <strong>Quitar el doble</strong>. No se puede doblar dos veces, porque una
+          carta lleva Premium o no lo lleva. Y si te acuerdas <em>antes</em> de añadirla, el{' '}
+          <strong>×2</strong> del teclado se queda pulsado y la pantalla enseña la cuenta hecha.
         </Duda>
 
         <Duda pregunta="Un plato quemado, ¿cuenta como carta para el aumento de mano?">

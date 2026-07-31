@@ -1,10 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import { calcularCuenta } from '../calculoRonda.ts'
 import {
+  alternarDobleEn,
+  cartaSumada,
+  cuentaDeCartas,
   cuentaDeSumandos,
-  doblarCartaEn,
   duplicarImporte,
+  importeEfectivo,
   quitarCartaEn,
+  sumarCartas,
   sumarImportes,
 } from '../sumador.ts'
 import { MAX_IMPORTE } from '../validacion.ts'
@@ -112,79 +116,146 @@ describe('doblar una carta para Premium', () => {
 })
 
 /*
- * Doblar y quitar una carta YA sumada, que es lo que abre el menú de la ficha.
- * Antes solo se podía doblar lo que se estaba tecleando, así que acordarse del
- * Premium a posteriori obligaba a rehacer la carta.
+ * El Premium de una carta ya sumada, que es lo que abre el menú de la ficha.
+ *
+ * Está guardado como estado y no aplicado al importe, y los dos defectos que
+ * eso arregla son justo lo que fijan estos tests: no se puede apilar, y la carta
+ * sigue sabiendo lo que decía en la mesa para poder deshacerlo y enseñarlo.
  */
-describe('tocar una carta ya sumada', () => {
-  it('doblar una carta deja el resto igual', () => {
-    expect(doblarCartaEn([12, 8, 15], 1)).toEqual([12, 16, 15])
+describe('el Premium de una carta ya sumada', () => {
+  const mesa = () => [cartaSumada(12), cartaSumada(8), cartaSumada(15)]
+
+  it('doblar marca esa carta y deja el resto igual', () => {
+    expect(alternarDobleEn(mesa(), 1)).toEqual([
+      { importe: 12, doblada: false },
+      { importe: 8, doblada: true },
+      { importe: 15, doblada: false },
+    ])
+  })
+
+  it('la carta guarda lo que dice en la mesa, no el doble', () => {
+    const doblada = alternarDobleEn([cartaSumada(12)], 0)[0]!
+    expect(doblada.importe).toBe(12)
+    expect(importeEfectivo(doblada)).toBe(24)
+  })
+
+  it('doblar dos veces NO da un ×4: es un interruptor', () => {
+    const unaVez = alternarDobleEn([cartaSumada(9)], 0)
+    const dosVeces = alternarDobleEn(unaVez, 0)
+    expect(sumarCartas(unaVez)).toBe(18)
+    // Vuelve a la carta de la mesa, que es lo que hace el botón de quitar el doble.
+    expect(sumarCartas(dosVeces)).toBe(9)
+    expect(dosVeces).toEqual([{ importe: 9, doblada: false }])
+  })
+
+  it('tres veces sigue sin acumular', () => {
+    let cartas = [cartaSumada(9)]
+    for (let i = 0; i < 3; i++) cartas = alternarDobleEn(cartas, 0)
+    expect(sumarCartas(cartas)).toBe(18)
   })
 
   it('doblar un plato quemado dobla el descuento, no lo convierte en tapa', () => {
-    expect(doblarCartaEn([20, -15], 1)).toEqual([20, -30])
+    const cartas = alternarDobleEn([cartaSumada(20), cartaSumada(-15)], 1)
+    expect(sumarCartas(cartas)).toBe(-10)
+    expect(importeEfectivo(cartas[1]!)).toBe(-30)
   })
 
-  it('doblar dos veces multiplica por cuatro', () => {
-    expect(doblarCartaEn(doblarCartaEn([9], 0), 0)).toEqual([36])
-  })
-
-  it('doblar respeta el tope, igual que duplicarImporte', () => {
-    expect(doblarCartaEn([MAX_IMPORTE], 0)).toEqual([MAX_IMPORTE])
-    expect(doblarCartaEn([-MAX_IMPORTE], 0)).toEqual([-MAX_IMPORTE])
+  it('el doble respeta el tope, igual que duplicarImporte', () => {
+    expect(sumarCartas(alternarDobleEn([cartaSumada(MAX_IMPORTE)], 0))).toBe(MAX_IMPORTE)
+    expect(sumarCartas(alternarDobleEn([cartaSumada(-MAX_IMPORTE)], 0))).toBe(-MAX_IMPORTE)
   })
 
   it('el total sale del fold, así que doblar lo recalcula solo', () => {
-    const cartas = [12, 8, 15]
-    expect(sumarImportes(cartas)).toBe(35)
-    expect(sumarImportes(doblarCartaEn(cartas, 1))).toBe(43)
+    expect(sumarCartas(mesa())).toBe(35)
+    expect(sumarCartas(alternarDobleEn(mesa(), 1))).toBe(43)
   })
 
-  it('doblar no cambia el recuento de cartas: la del aumento sigue igual', () => {
-    const cartas = [12, 8, 15]
-    expect(cuentaDeSumandos(doblarCartaEn(cartas, 0))).toBe(cuentaDeSumandos(cartas))
+  it('el Premium no añade una carta a la mesa: el recuento del aumento no se mueve', () => {
+    expect(cuentaDeCartas(alternarDobleEn(mesa(), 0))).toBe(cuentaDeCartas(mesa()))
+    expect(cuentaDeCartas(mesa())).toBe(3)
   })
 
-  it('quitar saca solo esa carta', () => {
-    expect(quitarCartaEn([12, 8, 15], 1)).toEqual([12, 15])
+  it('una carta con importe de basura no cuenta, ni doblada', () => {
+    const cartas = alternarDobleEn([cartaSumada(10), cartaSumada(Number.NaN)], 1)
+    expect(sumarCartas(cartas)).toBe(10)
+    expect(cuentaDeCartas(cartas)).toBe(1)
+  })
+})
+
+describe('quitar una carta ya sumada', () => {
+  const mesa = () => [cartaSumada(12), cartaSumada(8), cartaSumada(15)]
+
+  it('saca solo esa carta', () => {
+    expect(quitarCartaEn(mesa(), 1)).toEqual([
+      { importe: 12, doblada: false },
+      { importe: 15, doblada: false },
+    ])
   })
 
   it('quitar la única carta deja la lista vacía', () => {
-    expect(quitarCartaEn([12], 0)).toEqual([])
+    expect(quitarCartaEn([cartaSumada(12)], 0)).toEqual([])
   })
 
-  it('quitar sí baja el recuento de cartas', () => {
-    expect(cuentaDeSumandos(quitarCartaEn([12, 8, 15], 2))).toBe(2)
+  it('sí baja el recuento de cartas', () => {
+    expect(cuentaDeCartas(quitarCartaEn(mesa(), 2))).toBe(2)
   })
 
   it('con cartas repetidas se quita la de esa posición y no todas', () => {
-    expect(quitarCartaEn([10, 10, 10], 0)).toEqual([10, 10])
+    expect(quitarCartaEn([cartaSumada(10), cartaSumada(10), cartaSumada(10)], 0)).toHaveLength(2)
   })
 
-  /*
-   * Fuera de rango pasa de verdad: el desglose se descarta si se teclea el total
-   * a mano, así que el índice que tenía el menú abierto puede dejar de existir.
-   */
-  it('un índice que no existe no toca nada y devuelve la misma lista', () => {
-    const cartas = [12, 8]
-    expect(doblarCartaEn(cartas, 5)).toBe(cartas)
+  it('quitar una doblada se lleva su doble por delante', () => {
+    const cartas = alternarDobleEn([cartaSumada(12), cartaSumada(8)], 0)
+    expect(sumarCartas(cartas)).toBe(32)
+    expect(sumarCartas(quitarCartaEn(cartas, 0))).toBe(8)
+  })
+})
+
+/*
+ * Fuera de rango pasa de verdad: el desglose se descarta si se teclea el total
+ * a mano, así que el índice que tenía el menú abierto puede dejar de existir.
+ */
+describe('índices que no existen', () => {
+  it('no tocan nada y devuelven la misma lista', () => {
+    const cartas = [cartaSumada(12), cartaSumada(8)]
+    expect(alternarDobleEn(cartas, 5)).toBe(cartas)
     expect(quitarCartaEn(cartas, 5)).toBe(cartas)
-    expect(doblarCartaEn(cartas, -1)).toBe(cartas)
+    expect(alternarDobleEn(cartas, -1)).toBe(cartas)
     expect(quitarCartaEn(cartas, -1)).toBe(cartas)
-    expect(doblarCartaEn([], 0)).toEqual([])
+    expect(alternarDobleEn([], 0)).toEqual([])
   })
 
   it('un índice que no es entero tampoco toca nada', () => {
-    const cartas = [12, 8]
-    expect(doblarCartaEn(cartas, 1.5)).toBe(cartas)
+    const cartas = [cartaSumada(12), cartaSumada(8)]
+    expect(alternarDobleEn(cartas, 1.5)).toBe(cartas)
     expect(quitarCartaEn(cartas, Number.NaN)).toBe(cartas)
   })
 
   it('ninguna de las dos muta la lista de entrada', () => {
-    const cartas = [12, 8, 15]
-    doblarCartaEn(cartas, 0)
+    const cartas = [cartaSumada(12), cartaSumada(8), cartaSumada(15)]
+    alternarDobleEn(cartas, 0)
     quitarCartaEn(cartas, 0)
-    expect(cartas).toEqual([12, 8, 15])
+    expect(cartas).toEqual([
+      { importe: 12, doblada: false },
+      { importe: 8, doblada: false },
+      { importe: 15, doblada: false },
+    ])
+  })
+})
+
+describe('sumar cartas con Premium de por medio', () => {
+  it('sin cartas el total es cero', () => {
+    expect(sumarCartas([])).toBe(0)
+  })
+
+  it('una carta sin Premium cuenta lo que dice', () => {
+    expect(importeEfectivo(cartaSumada(14))).toBe(14)
+  })
+
+  it('el total no se recorta a cero aunque los quemados manden', () => {
+    // Mismo contrato que sumarImportes: el recorte va al final, tras la propina.
+    const cartas = alternarDobleEn([cartaSumada(10), cartaSumada(-30)], 1)
+    expect(sumarCartas(cartas)).toBe(-50)
   })
 })
 
