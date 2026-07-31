@@ -303,7 +303,55 @@ La forma menos mala, si se toma esa decisión: **local-first con relay opcional*
 
 ---
 
-## Sin decidir, de antes
+## 12. Que cada uno maneje solo su puntuación, y sea pseudo-privada
+
+**Depende del punto 11 para la parte de editar. La parte de ver se puede hacer sin servidor. Y antes que nada, la pregunta de reglas, que está medio contestada.**
+
+### ¿Las reglas dicen si el dinero es público o privado?
+
+**Lo que se ha podido comprobar:** el contenido de la caja son **100 cartas y 20 fichas de aumento**. No hay dinero, ni monedas, ni bloc de puntuación. Eso sale igual en la ficha de la editorial y en todas las reseñas ([2Tomatoes](https://2tomatoesgames.com/es/la-cuenta-8437027014796.html), [Gameplay Mini](https://gameplaymini.com/la-cuenta-juego-de-mesa-2-tomatoes/), [JuegameStore](https://www.juegamestore.es/blogs/noticias/resena-la-cuenta), [The Opinionated Gamers](https://opinionatedgamers.com/2025/11/28/dale-yu-review-of-la-cuenta/)).
+
+De ahí sale la conclusión, que es una **inferencia y no una cita**: si el juego no reparte dinero, tampoco define cómo se esconde. La contabilidad la lleva quien juega, con lo que tenga a mano —una servilleta, o esta app—, y por eso existe esto. Así que "compartida o privada" es muy probablemente **otro hueco del reglamento**, de la misma familia que el recorte a cero del punto 9 de decisiones abiertas.
+
+Y las dos reglas que sí están escritas empujan hacia **público**:
+
+- **La partida termina en el momento en que alguien se queda sin dinero.** Para que eso pare la partida, la mesa tiene que saber que ha pasado.
+- **Gana quien más dinero le quede, y el desempate se resuelve por el dinero que lleves encima** —el de verdad, en el bolsillo—. Las cifras se comparan en voz alta al acabar. (Este desempate ya está en las dudas frecuentes de la app.)
+
+**Lo que NO se ha podido comprobar:** el reglamento en sí. Los sitios que lo tienen devuelven 403 a la herramienta de descarga, así que **queda pendiente mirarlo con la caja delante**. Son treinta segundos y lo cierra: buscar si hay una instrucción de *anotad* los ahorros, si menciona una hoja de puntuación, y si en algún sitio dice *en secreto* o *sin que los demás lo vean*. Si aparece cualquiera de las tres, esta entrada cambia.
+
+**Mientras no se compruebe, la app está bien como está:** el marcador enseña el dinero de todos a todos, y el inicio dice quién va ganando.
+
+### El problema de fondo: lo que pasa en una ronda es público por construcción
+
+Esto no es una cuestión de reglas, es de mecánica. La cuenta sale de las cartas de la mesa, que las ve todo el mundo, y quién la parte lo deciden cartas públicas —A medias, A pachas—. O sea que **el hecho ya es público antes de tocar ningún móvil**. Dos consecuencias:
+
+1. **Si cada uno solo puede editar lo suyo, el mismo hecho hay que teclearlo N veces**, una por persona. Más trabajo que pasar el móvil, y N sitios donde equivocarse en vez de uno.
+2. **Se pierde la auditoría.** Hoy el marcador es una verdad única que todos pueden mirar; si cada uno maneja su cifra, nadie puede comprobar a nadie y darse dinero a uno mismo es invisible. En una mesa de bar eso puede ser la gracia o puede ser la discusión de la noche, pero **es una decisión que hay que tomar a sabiendas**, no un efecto colateral.
+
+### Lo que probablemente se quiere de verdad, y es más barato
+
+No "cada uno dueño de su cifra", sino **cada uno ve la suya y no la de los demás**. Eso es una vista, no un reparto de propiedad, y sale mucho más barato. Además tiene una propiedad bonita: **la privacidad es más fácil que compartir, porque hay que mandar menos**.
+
+Los ahorros de un jugador solo dependen de lo que ha pagado él (`aplicarPago` es por jugador), así que a cada móvil le basta con **las rondas en las que pagó ese jugador**: suficiente para calcular su dinero, insuficiente para calcular el de los demás. Un QR por persona, sin servidor, sin red.
+
+Dos avisos sobre eso:
+
+- **El corte de fin de partida es global.** La derivación para en seco en la primera ronda que arruina a alguien (`derivarEstado.ts`), y eso no se puede reproducir desde un trozo: el móvil que lleva la partida tiene que mandar además "esto terminó en la ronda N". Sin eso, un móvil con su rebanada calcularía dinero de rondas que no se jugaron.
+- **Sigue siendo pseudo, y el nombre está bien puesto:** el móvil que teclea las rondas lo sabe todo por definición. Alguien tiene que ver la mesa.
+
+### Qué depende de qué
+
+| Lo que se quiere | Qué hace falta |
+|---|---|
+| Cada uno **ve** solo lo suyo | Un QR por jugador con su rebanada. **Sin servidor.** Se puede hacer hoy. |
+| Cada uno **edita** lo suyo desde su móvil | Escritura desde varios dispositivos, o sea la sincronización en vivo del punto 11: **servidor**, y los tres arreglos del modelo que están listados allí. |
+
+**Decisión pendiente**, y en este orden:
+
+1. **Mirar el reglamento** con la caja delante, que es lo único que puede tumbar todo lo demás.
+2. Si el dinero es público, esto se queda en una **vista opcional** —un "modo privado" para cuando el móvil se pasa de mano en mano— y no en un cambio de modelo.
+3. Si de verdad se quiere que cada uno edite lo suyo, entonces primero hay que decidir el punto 11, y aceptar que se pierde la auditoría de la mesa.
 
 Vienen del encargo original y siguen abiertas. Están explicadas en el [README](README.md).
 
