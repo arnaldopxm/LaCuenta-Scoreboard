@@ -11,7 +11,7 @@
  *   node scripts/verificar-offline.mjs [--capturas]
  */
 import { createReadStream } from 'node:fs'
-import { stat } from 'node:fs/promises'
+import { readFile, stat } from 'node:fs/promises'
 import { createServer } from 'node:http'
 import { extname, join, normalize, resolve } from 'node:path'
 import { existsSync } from 'node:fs'
@@ -456,8 +456,157 @@ if (CAPTURAS) {
 }
 await contextoIOS.close()
 
+/*
+ * · Instalación directa, la de Android
+ *
+ * Aquí estaba el agujero: un Chromium sin cabeza no dispara `beforeinstallprompt`,
+ * así que en el recorrido normal sale siempre el camino `manual` y el botón de
+ * verdad no se veía nunca en CI.
+ *
+ * Lo que no se puede fingir es que el navegador DECIDA disparar el evento —eso
+ * depende de sus criterios y de su heurística, y sigue necesitando un Android en
+ * la mano—. Todo lo demás sí: disparándolo a mano se comprueba nuestra mitad
+ * entera, que es donde están los fallos que podemos cometer nosotros.
+ */
+console.log('\n· Instalación directa, con el evento disparado a mano\n')
+const contextoDirecta = await navegador.newContext({
+  viewport: { width: 390, height: 844 },
+  locale: 'es-ES',
+})
+const paginaDirecta = await contextoDirecta.newPage()
+const erroresDirecta = []
+paginaDirecta.on('pageerror', (error) => erroresDirecta.push(String(error)))
+paginaDirecta.on('console', (mensaje) => {
+  if (mensaje.type() === 'error') erroresDirecta.push(mensaje.text())
+})
+
+/*
+ * Se instrumenta ANTES de cargar nada, porque `vigilarInstalacion()` engancha el
+ * listener en cuanto se evalúa el módulo, antes de que React monte. Es justo la
+ * condición que hace que esto funcione en un móvil de verdad.
+ */
+await paginaDirecta.addInitScript(() => {
+  window.__espia = { prevenido: false, prompts: 0 }
+  window.__dispararInstalacion = () => {
+    const evento = new Event('beforeinstallprompt', { cancelable: true })
+    evento.prompt = () => {
+      window.__espia.prompts++
+      return Promise.resolve()
+    }
+    window.dispatchEvent(evento)
+    // `dispatchEvent` es síncrono, así que aquí ya se sabe si la app lo paró.
+    window.__espia.prevenido = evento.defaultPrevented
+  }
+})
+await paginaDirecta.goto(BASE, { waitUntil: 'load' })
+await paginaDirecta.evaluate(() => window.__dispararInstalacion())
+
+comprobar(
+  'Al evento de instalación se le hace preventDefault',
+  await paginaDirecta.evaluate(() => window.__espia.prevenido),
+  'es lo que calla la barrita que Chrome saca por su cuenta',
+)
+
+await paginaDirecta.getByRole('button', { name: 'Instalar en el móvil' }).click()
+const botonDirecto = paginaDirecta.getByRole('button', { name: 'Instalar ahora' })
+await paginaDirecta.waitForSelector('text=Instalar ahora', { timeout: 5000 }).catch(() => null)
+comprobar(
+  'Con el prompt guardado, el wizard enseña el botón de verdad y no las instrucciones',
+  (await botonDirecto.count()) === 1 &&
+    (await paginaDirecta.getByText('Desde el menú del navegador').count()) === 0,
+)
+
+await botonDirecto.click()
+comprobar(
+  'Pulsarlo abre el diálogo del navegador',
+  (await paginaDirecta.evaluate(() => window.__espia.prompts)) === 1,
+)
+
+// El evento se gasta: una vez usado ya no vale, y hay que volver a las instrucciones.
+await paginaDirecta.waitForSelector('text=Desde el menú del navegador', { timeout: 5000 }).catch(() => null)
+comprobar(
+  'El evento se gasta al usarlo y el wizard vuelve a las instrucciones',
+  (await botonDirecto.count()) === 0 &&
+    (await paginaDirecta.getByText('Desde el menú del navegador').count()) === 1,
+)
+
+/*
+ * Instalada desde el diálogo del navegador: el acceso tiene que desaparecer en el
+ * momento y sin recargar, que es lo que separa "un acceso discreto" de una app
+ * que insiste con algo ya hecho.
+ */
+await paginaDirecta.evaluate(() => window.dispatchEvent(new Event('appinstalled')))
+await paginaDirecta.waitForSelector('text=Ya está instalada', { timeout: 5000 }).catch(() => null)
+comprobar(
+  'Tras instalar, la pantalla lo dice en vez de seguir explicando cómo',
+  (await paginaDirecta.getByText('Ya está instalada').count()) === 1,
+)
+
+await paginaDirecta.goBack()
+await paginaDirecta.waitForSelector('text=Marcador de partidas', { timeout: 5000 })
+comprobar(
+  'Y el enlace de instalar desaparece del inicio, sin recargar',
+  (await paginaDirecta.getByRole('button', { name: 'Instalar en el móvil' }).count()) === 0,
+)
+comprobar(
+  'Sin errores de JavaScript en el camino directo',
+  erroresDirecta.length === 0,
+  erroresDirecta.join(' | '),
+)
+if (CAPTURAS) {
+  await paginaDirecta.screenshot({ path: 'capturas/09-instalada.png', fullPage: true })
+}
+await contextoDirecta.close()
+
 await navegador.close()
 servidor.close()
+
+/*
+ * · Criterios de instalabilidad
+ *
+ * Lo otro que se puede hacer por el fleco de Android: si el botón no aparece en
+ * un móvil de verdad, lo más probable no es un fallo de nuestro código sino que
+ * la PWA haya dejado de cumplir alguno de los criterios que Chromium exige para
+ * disparar el evento. Comprobarlos aquí es lo más cerca que se puede estar de
+ * comprobar el disparo sin tener el móvil delante.
+ */
+console.log('\n· Criterios de instalabilidad\n')
+const manifiesto = JSON.parse(await readFile(join(DIST, 'manifest.webmanifest'), 'utf8'))
+const iconos = manifiesto.icons ?? []
+const hayIcono = (tam) =>
+  iconos.some(
+    (icono) =>
+      String(icono.sizes ?? '').split(' ').includes(`${tam}x${tam}`) && icono.type === 'image/png',
+  )
+
+const criteriosQueFaltan = []
+if (!manifiesto.name) criteriosQueFaltan.push('name')
+if (!manifiesto.short_name) criteriosQueFaltan.push('short_name')
+if (!manifiesto.start_url) criteriosQueFaltan.push('start_url')
+if (!['standalone', 'fullscreen', 'minimal-ui'].includes(manifiesto.display)) {
+  criteriosQueFaltan.push(`display (es "${manifiesto.display}")`)
+}
+if (!hayIcono(192)) criteriosQueFaltan.push('icono png de 192')
+if (!hayIcono(512)) criteriosQueFaltan.push('icono png de 512')
+comprobar(
+  'El manifiesto cumple los criterios que Chromium exige para ofrecer instalar',
+  criteriosQueFaltan.length === 0,
+  criteriosQueFaltan.join(', ') || 'name, short_name, start_url, display e iconos de 192 y 512',
+)
+
+const iconosQueFaltan = iconos.map((i) => i.src).filter((src) => !existsSync(join(DIST, src)))
+comprobar(
+  'Los iconos que promete el manifiesto están en el bundle',
+  iconosQueFaltan.length === 0,
+  iconosQueFaltan.join(', ') || `${iconos.length} iconos`,
+)
+
+// Sin manejador de `fetch` no hay instalabilidad, por muy bien que esté el resto.
+const worker = await readFile(join(DIST, 'sw.js'), 'utf8')
+comprobar(
+  'El service worker tiene manejador de fetch, que es el otro criterio',
+  /addEventListener\(\s*['"]fetch['"]/.test(worker),
+)
 
 const fallos = comprobaciones.filter((c) => !c.ok)
 console.log(`\n${comprobaciones.length - fallos.length}/${comprobaciones.length} comprobaciones\n`)
