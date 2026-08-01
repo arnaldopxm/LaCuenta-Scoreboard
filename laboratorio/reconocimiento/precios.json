@@ -1,0 +1,34 @@
+{
+  "_comentario": [
+    "Cajas del precio marcadas a mano sobre las fotos originales, en pixeles del",
+    "bitmap crudo de 4032x3024 (sin aplicar la rotacion del EXIF).",
+    "Se marcan a mano a proposito: asi se mide el motor de lectura por separado",
+    "de la deteccion automatica, que es un problema distinto y sin resolver.",
+    "Las fotos no estan en el repositorio; ver README.md."
+  ],
+  "fotos": {
+    "IMG_7599.jpeg": [
+      { "caja": [1003, 857, 1178, 942], "valor": "-70", "carta": "plato quemado" },
+      { "caja": [426, 932, 584, 1019], "valor": "100", "carta": "tabla de quesos" }
+    ],
+    "IMG_7600.jpeg": [
+      { "caja": [1779, 1325, 1909, 1395], "valor": "20", "carta": "gazpacho" }
+    ],
+    "IMG_7601.jpeg": [
+      { "caja": [2949, 993, 3104, 1068], "valor": "20", "carta": "gazpacho" },
+      { "caja": [2303, 1184, 2433, 1254], "valor": "50", "carta": "morcilla" },
+      { "caja": [1634, 857, 1779, 925], "valor": "100", "carta": "percebes" },
+      { "caja": [933, 1164, 1048, 1264], "valor": "multiple", "carta": "vino tinto" }
+    ],
+    "IMG_7602.jpeg": [
+      { "caja": [1658, 217, 1798, 287], "valor": "-50", "carta": "plato quemado" }
+    ],
+    "IMG_7603.jpeg": [
+      { "caja": [1885, 1114, 2025, 1184], "valor": "50", "carta": "pimientos del padron" },
+      { "caja": [1270, 1235, 1395, 1322], "valor": "70", "carta": "rabo de toro" },
+      { "caja": [2831, 574, 3025, 724], "valor": "multiple", "carta": "vino tinto" }
+    ]
+  },
+  "vocabulario": ["10", "20", "30", "40", "50", "60", "70", "100",
+                  "-10", "-20", "-30", "-40", "-50", "-60", "-70"]
+}

@@ -6,3 +6,10 @@ dev-dist/
 coverage/
 capturas/
 .tmp-actualizacion/
+
+# Fotos del laboratorio de reconocimiento: no entran al repo (ver
+# laboratorio/reconocimiento/README.md).
+laboratorio/**/fotos/
+laboratorio/**/*.jpeg
+laboratorio/**/*.jpg
+laboratorio/**/__pycache__/

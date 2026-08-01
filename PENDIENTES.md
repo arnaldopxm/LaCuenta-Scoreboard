@@ -206,11 +206,11 @@ Una opción intermedia si lo que se busca es sostener el proyecto: un enlace de 
 
 ## 8. Reconocimiento de cartas por foto
 
-**Bloqueado a la espera de fotos reales. Sin ellas no se puede decidir.**
+**Desbloqueado y medido. El OCR general queda descartado.** Ya hay fotos reales: cinco de una mesa jugada, hechas con el móvil. El banco de medición está en [`laboratorio/reconocimiento`](laboratorio/reconocimiento/README.md) y se puede repetir.
 
 La idea es fotografiar las cartas de la mesa y que la app sume. Decidido ya: **todo en el dispositivo** (nada de API de visión, que rompería el offline y la privacidad) y el motor como **descarga opcional**, para que la app base siga pesando medio mega e instalándose con el wifi malo de un bar.
 
-Lo medido, no estimado a ojo:
+Los pesos de la vía Tesseract, medidos en su día:
 
 | Pieza | Peso |
 |---|---|
@@ -218,11 +218,62 @@ Lo medido, no estimado a ojo:
 | `eng.traineddata` (variante `best_int`, comprimida) | 2,8 MB |
 | Glue de tesseract.js | ~0,1 MB |
 
-Unos **5,7 MB**. Y hay margen para bajarlo bastante: si los precios son un puñado de cifras con tipografía fija, se puede recortar el `traineddata` a solo dígitos, o entrenar un clasificador de glifos que cabría **por debajo de 1 MB** y sería más preciso que un OCR general, porque el problema es mucho más pequeño que "leer texto arbitrario".
+Unos **5,7 MB**.
 
-**Qué falta para decidir:** una foto real de una mesa con cartas jugadas, hecha con el móvil y con la luz que hay de verdad. Y otra con mala luz, que es el caso que importa: si funciona a mediodía pero no en una terraza de noche, no sirve. Lo que hay que mirar en ellas: cuántos píxeles ocupa el precio, si hay brillos del plástico, cuánto se solapan las cartas y si la cifra es limpia o decorativa. Esas cuatro cosas deciden entre OCR general, clasificador propio o descartarlo.
+### Las cuatro preguntas, respondidas
 
-**Sin prisa:** el sumador manual ya resuelve el problema de fondo, que era sumar. Esto es comodidad, no necesidad.
+Eran las que decidían entre OCR general, clasificador propio o descartarlo.
+
+| Lo que había que mirar | Lo medido | ¿Es el problema? |
+|---|---|---|
+| Cuántos píxeles ocupa el precio | **43–61 px** de alto de cifra en la foto cruda de 12 Mpx (25–42 px el bloque pequeño del vino) | **No.** Sobra de largo |
+| Brillos del plástico | Las cartas van enfundadas y reflejan: 0,9–2,6 % de píxeles quemados por foto. El contraste Michelson del precio cae de 0,24–0,42 a **0,17** cuando el brillo pega en la esquina | Solo en la carta del vino |
+| Cuánto se solapan las cartas | El precio está impreso en **las dos esquinas**, y la de abajo va del revés. En los abanicos de las cinco fotos **toda carta enseña al menos un precio** | **No.** El diseño de la carta ya lo resuelve |
+| Si la cifra es limpia o decorativa | **Decorativa.** Slab serif, y el **€ va pegado al último dígito** | **Sí. Este es el problema** |
+
+Dos sorpresas ahí. La primera, que el tamaño no importa: la precisión es **plana entre 72 px y 12 px** de alto de cifra. Ampliar la foto no arregla nada, porque lo que falla no es la resolución. La segunda, que el solape —que parecía el riesgo gordo— lo desactiva el propio diseño de la carta.
+
+### Lo que hace Tesseract con estas fotos
+
+**6 de 9 precios, un 67 % por carta.** Y eso es el **techo**, no el resultado esperable: se le da la caja del precio ya recortada a mano, o sea suponiendo una detección de carta perfecta que hoy no existe.
+
+Encadenado a una ronda entera, que es como se usaría:
+
+| Cartas en la ronda | Probabilidad de que la ronda salga bien entera |
+|---|---|
+| 5 | 13 % |
+| 8 | 4 % |
+| 12 | 0,8 % |
+
+Los fallos, por tipo:
+
+- **El € se lee como cifra y se pega al precio**: `20€` → `206`, `100€` → `10064`, `-70€` → `-704`. Es el fallo más frecuente y el único **corregible sin tocar el motor**: basta quedarse con el prefijo numérico y encajarlo al vocabulario cerrado del juego (que son quince valores contados). Ya va aplicado en ese 67 %; sin él, el acierto crudo es de 2 sobre 9.
+- **Se pierde el signo menos**: `-50€` se lee `50`. Silencioso y de 100 € de error. Es el fallo que descalifica la vía: un marcador que se equivoca es malo, pero uno que se equivoca **de signo, con confianza y sin avisar** es peor que no tenerlo.
+- **Cifras cambiadas**: `100` → `10`, `70` → `10`.
+- **La carta de vino no se lee**, en ninguna de las dos fotos. El bloque de cinco precios (`30€/60€ 120€/180€ 240€`) sale como `30/60420/40` en el mejor caso.
+
+**Conclusión: 5,7 MB de descarga para acertar dos de cada tres cartas y mentir en el signo.** No sale a cuenta. Tesseract queda descartado para este mazo.
+
+### El cuello de botella no era leer, era encontrar la carta
+
+Esto no estaba en el planteamiento original y cambia el tamaño del problema. Todo lo de arriba da por hecho que sabemos dónde está cada precio. Un intento de localizarlo solo —buscando la banda blanca de la esquina, que es donde el precio vive siempre— se enganchó a **la carta de al lado en 1 de cada 11 casos**. Con las cartas en abanico, giradas y solapadas, decidir a qué carta pertenece un precio es un problema aparte, y encima hay que evitar contar dos veces la esquina invertida de la carta de debajo.
+
+Resolverlo bien pide detección de contornos y rectificación de perspectiva. Eso es terreno de `opencv.js`, que ronda los **8 MB**: más que el presupuesto de OCR que ya se consideró caro. Es decir, la funcionalidad no es "5,7 MB de OCR", es una tubería de visión completa.
+
+### Qué queda vivo
+
+La vía del **clasificador propio** sigue siendo la única con sentido, pero reformulada: no clasificar cifras, sino **clasificar la carta**. El precio no hay que leerlo, porque es una propiedad de la carta, y el mazo tiene unas pocas decenas de cartas distintas, cada una con su color, su ilustración y su nombre. Eso es un problema cerrado y mucho más fácil que leer texto arbitrario, y cabría de sobra por debajo de 1 MB.
+
+Lo que hace falta para intentarlo, por orden:
+
+1. **Más fotos, y variadas**: distintas luces —falta el caso de noche, que es el que importa—, distintos ángulos y distintas manos. Las cinco actuales son todas de la misma mesa y la misma luz.
+2. **Resolver antes la detección**, que es lo que de verdad bloquea. Sin recorte fiable de cada carta, da igual lo bueno que sea el clasificador.
+
+Y una cosa que **las fotos nuevas no van a cambiar**: el veredicto sobre Tesseract. Los fallos son sistemáticos —la tipografía, el € pegado, el signo menos—, no mala suerte del muestreo. Más fotos afinan la cifra del 67 %; no la mueven de sitio.
+
+**Aviso sobre el tamaño de la muestra:** cinco fotos, nueve precios de un dígito o dos y dos bloques de vino. Suficiente para descartar, que es una afirmación robusta, y **claramente insuficiente para entrenar nada**.
+
+**Sin prisa:** el sumador manual ya resuelve el problema de fondo, que era sumar. Esto es comodidad, no necesidad. Y descartarlo sigue siendo una respuesta válida.
 
 ---
 
