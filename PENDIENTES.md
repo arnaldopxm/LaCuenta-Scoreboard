@@ -142,7 +142,19 @@ El enlace **desaparece en cuanto está instalada** —`display-mode: standalone`
 
 Lo que se comprueba: la decisión de camino y el reconocimiento de plataforma tienen tests unitarios con agentes de usuario reales, incluido el de **iPadOS, que se anuncia como un Mac de escritorio** y se le pilla por los puntos de contacto. La verificación offline abre el wizard y exige que salga **uno** de los tres caminos —nunca ninguno—, y con un contexto que se anuncia como iPhone comprueba que salgan las instrucciones de Safari y no las del menú de Chromium.
 
-**El fleco:** el camino `directa` no se puede verificar en CI. Un Chromium sin cabeza no dispara `beforeinstallprompt`, así que en la verificación sale siempre el camino `manual`. Que el botón de instalar aparezca de verdad y abra el diálogo **hay que comprobarlo una vez con un Android en la mano**. Si ahí no sale, lo que se ve es el camino `manual`, que sigue siendo instrucciones correctas: el fallo degrada, no rompe.
+**El fleco, ya reducido a la última milla.** Decía que el camino `directa` no se podía verificar en CI, y era verdad a medias: un Chromium sin cabeza no dispara `beforeinstallprompt`, así que en el recorrido normal sale siempre el camino `manual`. Pero lo que no se puede fingir es solo que el navegador **decida** dispararlo. Nuestra mitad sí, y ahora se comprueba entera disparando el evento a mano en la verificación offline:
+
+- que se le hace `preventDefault()`, que es lo que calla la barrita que Chrome saca por su cuenta;
+- que con el prompt guardado sale el botón de verdad y no las instrucciones;
+- que pulsarlo abre el diálogo, o sea que se llama a `prompt()`;
+- que **el evento se gasta** y el wizard vuelve a las instrucciones;
+- que con `appinstalled` la pantalla pasa a decir que ya está instalada y el enlace desaparece del inicio **sin recargar**.
+
+Se instrumenta antes de cargar nada, que es justo la condición que hace que esto funcione en un móvil de verdad: `vigilarInstalacion()` engancha el listener al evaluar el módulo, antes de que React monte.
+
+Y por el otro lado se comprueban **los criterios de instalabilidad** que Chromium exige para disparar el evento: `name`, `short_name`, `start_url`, `display`, iconos png de 192 y 512, que esos iconos existan de verdad en el bundle, y que el service worker tenga manejador de `fetch`. Si algún día el botón no sale en un Android, lo más probable no es un fallo de nuestro código sino uno de estos, y ahora salta en CI en vez de descubrirse en un bar.
+
+**Lo que sigue necesitando un Android en la mano:** que Chrome dispare el evento. Es su heurística y no hay forma de provocarla desde aquí. Si ahí no sale, lo que se ve es el camino `manual`, que sigue siendo instrucciones correctas: el fallo degrada, no rompe.
 
 ---
 

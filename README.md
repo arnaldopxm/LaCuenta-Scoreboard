@@ -40,7 +40,7 @@ npm run verificar:offline
 
 Levanta un servidor estático con `dist/`, abre Chromium, instala el service worker, juega una partida, **corta la red del navegador**, recarga y comprueba que todo siga en pie. También vigila que no salga ni una petición fuera del origen.
 
-Las veintinueve comprobaciones que hace:
+Las treinta y nueve comprobaciones que hace:
 
 | Comprobación | Qué verifica |
 |---|---|
@@ -73,6 +73,16 @@ Las veintinueve comprobaciones que hace:
 | En iOS se explica el gesto de Compartir | Con un contexto que se anuncia como iPhone |
 | El icono de compartir va dibujado | Sin fuentes de iconos ni nada remoto |
 | Sin errores de JavaScript en iOS | En ese mismo contexto |
+| Al evento de instalación se le hace `preventDefault` | Es lo que calla la barrita que Chrome saca por su cuenta |
+| Con el prompt guardado sale el botón de verdad | Y no las instrucciones del menú |
+| Pulsarlo abre el diálogo del navegador | Se llama a `prompt()` una vez |
+| El evento se gasta al usarlo | El wizard vuelve a las instrucciones |
+| Tras instalar, la pantalla lo dice | En vez de seguir explicando cómo |
+| El enlace de instalar desaparece del inicio | Con `appinstalled`, sin recargar |
+| Sin errores de JavaScript en el camino directo | En ese contexto |
+| El manifiesto cumple los criterios de instalabilidad | `name`, `short_name`, `start_url`, `display` e iconos de 192 y 512 |
+| Los iconos que promete el manifiesto están en el bundle | Los cuatro |
+| El service worker tiene manejador de `fetch` | El otro criterio que exige Chromium |
 
 Si el entorno tiene otro Chromium, se le pasa con `CHROMIUM_BIN=/ruta/al/chrome`.
 
@@ -333,7 +343,7 @@ Sin emojis en la interfaz. Los iconos son SVG dibujados a mano en el propio cód
 
 En [PENDIENTES.md](PENDIENTES.md), ordenado de "se puede hacer ya" a "hay que decidir antes": los créditos, el manual del juego, el reconocimiento de cartas por foto, y las dos que chocan de frente con los no-negociables y necesitan una decisión consciente — la publicidad y **compartir la partida entre varios móviles**, que en vivo no se puede hacer sin servidor. Colgando de esa está el estado compartido con el permiso de escritura acotado a cada jugador, que resulta ser lo que abarata la sincronización en vez de complicarla: si cada móvil solo escribe lo suyo, dos móviles no se pisan nunca. Y dos ideas pequeñas de pantalla: enseñar el puesto en el marcador sin reordenar las filas, y una flecha con el sentido de juego para cuando se invierte.
 
-Ya están hechas las **actualizaciones del PWA**, la **invitación a instalar**, el **menú de la ficha del sumador** y las **dudas frecuentes**. De la invitación a instalar queda un fleco anotado allí: el botón directo de Android no se puede verificar en CI —un Chromium sin cabeza no dispara `beforeinstallprompt`— y hay que comprobarlo una vez con un móvil en la mano.
+Ya están hechas las **actualizaciones del PWA**, la **invitación a instalar**, el **menú de la ficha del sumador** y las **dudas frecuentes**. Del fleco de Android que estaba anotado —el botón directo no se podía verificar en CI— ya solo queda la última milla: nuestra mitad se comprueba entera disparando el evento a mano, y lo que no se puede fingir es que Chrome **decida** dispararlo. Eso sigue queriendo un móvil en la mano, pero si algún día no sale, los criterios de instalabilidad también se comprueban ahora y dirían por qué.
 
 ---
 
