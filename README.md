@@ -331,7 +331,7 @@ Sin emojis en la interfaz. Los iconos son SVG dibujados a mano en el propio cód
 
 ## Qué queda por hacer
 
-En [PENDIENTES.md](PENDIENTES.md), ordenado de "se puede hacer ya" a "hay que decidir antes": los créditos, el manual del juego, el reconocimiento de cartas por foto y el asunto de la publicidad, que choca de frente con los no-negociables y necesita una decisión consciente.
+En [PENDIENTES.md](PENDIENTES.md), ordenado de "se puede hacer ya" a "hay que decidir antes": los créditos, el manual del juego, el reconocimiento de cartas por foto, y las dos que chocan de frente con los no-negociables y necesitan una decisión consciente — la publicidad y **compartir la partida entre varios móviles**, que en vivo no se puede hacer sin servidor. Colgando de esa está el estado compartido con el permiso de escritura acotado a cada jugador, que resulta ser lo que abarata la sincronización en vez de complicarla: si cada móvil solo escribe lo suyo, dos móviles no se pisan nunca. Y dos ideas pequeñas de pantalla: enseñar el puesto en el marcador sin reordenar las filas, y una flecha con el sentido de juego para cuando se invierte.
 
 Ya están hechas las **actualizaciones del PWA**, la **invitación a instalar**, el **menú de la ficha del sumador** y las **dudas frecuentes**. De la invitación a instalar queda un fleco anotado allí: el botón directo de Android no se puede verificar en CI —un Chromium sin cabeza no dispara `beforeinstallprompt`— y hay que comprobarlo una vez con un móvil en la mano.
 

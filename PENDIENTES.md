@@ -251,6 +251,160 @@ Nada de esto es asesoramiento jurídico: es la lista de lo que queda por atar. E
 
 ---
 
+## 11. Compartir la partida entre varios móviles
+
+**Hay que decidir primero qué significa "compartir". Una de las dos respuestas cabe sin tocar nada; la otra choca con los no-negociables igual que la publicidad.**
+
+Hoy la app está construida sobre una premisa que está escrita en el README: *un solo móvil que se pasa de mano en mano*. No es una limitación que se quedó sin hacer, es el diseño. Esto lo cambia, así que conviene separar dos cosas que se piden con la misma frase:
+
+| Qué se quiere | Qué hace falta |
+|---|---|
+| **Que los demás vean el marcador en su móvil** | Pasar el estado de un móvil a otro. Se puede hacer sin red. |
+| **Que cualquiera pueda cerrar una ronda desde el suyo** | Sincronización en vivo entre dispositivos. **Esto necesita un servidor.** |
+
+Mi lectura: lo que la gente quiere de verdad en la mesa es lo primero —ver cuánto le queda a cada uno sin pedir el móvil— y eso es diez veces más barato. Cerrar la ronda lo hace uno, igual que en el juego reparte uno.
+
+### Lo que el modelo ya regala
+
+Esto sale gratis de decisiones que ya están tomadas, y es mucho:
+
+- **Es event-sourced.** La única fuente de verdad es la lista ordenada de rondas; el dinero se deriva. Fusionar dos listas de rondas es un problema tratable. Fusionar dos saldos calculados no lo habría sido.
+- **Los identificadores son UUID de `crypto.randomUUID`** (`src/dominio/id.ts`). Son únicos entre dispositivos sin coordinar nada, así que dos móviles no van a chocar al crear rondas. El comentario del archivo dice que "nunca salen del dispositivo": eso deja de ser verdad el día que esto se haga, y habrá que reescribirlo.
+- **Una ronda es pequeña y cerrada**: pagador, total, propina, reparto y el aumento. No hay referencias a nada externo salvo ids de jugadores.
+
+### Lo que se rompería, y son tres cosas concretas
+
+1. **`Ronda.indice` no sobrevive a una fusión.** Hoy se recalcula por posición del array en `sincronizar` (`src/dominio/mutaciones.ts`). Dos móviles que cierren una ronda cada uno a la vez producen dos rondas con el mismo índice. Haría falta un orden explícito —una marca de tiempo, o un contador por dispositivo— en vez de la posición.
+2. **Corregir y borrar son mutaciones en el sitio.** `editarRonda` sustituye la ronda y `borrarRonda` la saca de la lista. Eso no converge: si dos móviles corrigen la misma ronda, no hay forma de saber cuál gana. Para fusionar habría que convertirlas en **eventos** —"la ronda X pasa a valer Y", con su autor y su contador— y quedarse con el último. Es el cambio de fondo, y es el que hay que decidir **antes** de que el historial de partidas de la gente crezca. *El punto 12 desactiva casi todo este problema: si cada móvil solo puede escribir lo suyo, "gana el último del dueño" es una regla sin ambigüedad.*
+3. **Los ids de los jugadores se crean en el móvil que abre la partida.** Así que el reparto solo puede ser **uno crea y los demás importan**, nunca "cada uno abre la suya y luego se juntan": el mismo Javier tendría dos ids distintos y sería imposible saber que es el mismo.
+
+### Los transportes, con lo que cuesta cada uno
+
+Medido, no estimado: una partida de 8 jugadores y 12 rondas, todas A pachas, pesa **6,9 KB** tal como se guarda, y **301 bytes** en forma compacta —los jugadores por su posición y A pachas como una máscara de bits—. En una URL son **460 caracteres**, que caben en un QR de los que una cámara lee de lejos.
+
+| Transporte | Respeta los no-negociables | El problema |
+|---|---|---|
+| **QR con la partida dentro** | **Sí, los cuatro** | Es una foto del estado, no una sesión. Un escaneo por ronda es peor que pasar el móvil. |
+| Web Bluetooth | Sí | **No existe en Safari de iOS.** Muerto en una mesa con iPhones. |
+| Web NFC | Sí | Solo Chrome en Android. Igual de muerto. |
+| WebRTC entre móviles | No | Necesita un servidor de señalización para intercambiar la SDP, y el wifi de un bar suele aislar a los clientes entre sí. |
+| Servidor propio mínimo | No | Ver abajo. |
+| Firebase, Supabase y compañía | No | Rompe cuatro no-negociables **y** mete un tercero. |
+
+El truco bueno del QR: **no hace falta ni cámara ni lector**. Un móvil enseña un QR con la URL de la app y la partida en el fragmento; la cámara nativa de cualquier móvil lee QRs y abre enlaces. Cero dependencias nuevas, cero permisos, cero peticiones si el otro móvil ya tiene la app cacheada. **Pero hay que probarlo en un iPhone antes de darlo por bueno**: iOS abre los enlaces en Safari y no en la app instalada, y Safari tiene su propio IndexedDB, así que la partida podría aterrizar en la copia del navegador y no en la app del icono. Si eso pasa, el QR sirve para mirar y no para seguir jugando.
+
+### Si lo que se quiere es la sesión en vivo
+
+Entonces hay servidor, no hay vuelta. Y toca la misma tabla que la publicidad: se acaban las cero peticiones salientes, se acaba el modo avión para la parte que sincroniza, el RGPD deja de ser trivial —los nombres son datos personales y saldrían del dispositivo— y hay que abrir el `connect-src` de la CSP, con lo que se cae la garantía técnica. Añade además coste y mantenimiento: Pages es estático y gratis, un relay no.
+
+La forma menos mala, si se toma esa decisión: **local-first con relay opcional**. La app sigue siendo completa y usable con cero red, y el relay —propio, sin cuentas, sin persistencia, sin registros— solo empuja rondas cuando hay wifi. Así el fallo degrada en vez de romper, que es como está resuelto todo lo demás en esta app. Pero que quede claro que es un cambio de naturaleza del proyecto, no una función más.
+
+**Decisión pendiente:** espejo de lectura por QR (compatible, barato, y hay que probarlo en un iPhone), sesión en vivo con relay propio (rompe dos no-negociables a sabiendas), o nada y seguir pasando el móvil. Si algún día va a ser lo segundo, el punto 2 de "lo que se rompería" —convertir correcciones y borrados en eventos— conviene hacerlo antes, aunque la sincronización venga mucho después.
+
+**Sigue en el punto 12**, que es lo que se quiere de verdad y abarata la opción del relay: estado compartido con el permiso de escritura acotado a cada jugador.
+
+---
+
+## 12. Estado compartido, y cada uno con la opción de editar solo su cuenta
+
+**Depende del punto 11 para el transporte. Pero resuelve gratis lo más difícil de ese punto, así que conviene leerlos juntos.**
+
+Lo que se quiere: **una sola verdad que todos ven** —el marcador sigue siendo compartido y auditable, nada se esconde— y que cada persona que escanee el QR pueda, **si quiere**, manejar su propia cuenta desde su móvil. Ni reparto de la información, ni marcadores privados: reparto del **permiso de escritura**.
+
+### Por qué esto es más fácil de sincronizar, y no más difícil
+
+Es la parte que no se ve a primera vista. El problema gordo de sincronizar dos móviles es que los dos escriban en lo mismo y haya que decidir quién gana. **Acotar a cada uno a su cuenta elimina ese problema de raíz**: si un móvil solo puede escribir lo suyo, dos móviles nunca se pisan.
+
+Con eso, fusionar deja de ser un CRDT y pasa a ser **la unión de N registros con un solo escritor cada uno**, que es el único caso que se fusiona sin ceremonia. Y el punto 2 de "lo que se rompería" del punto 11 —que corregir y borrar mutan en el sitio y eso no converge— se cae solo: si solo el dueño toca lo suyo, "gana el último del dueño" es una regla sin ambigüedad.
+
+Dicho de otra forma: **el reparto de permisos ES la estrategia de fusión.** Sale más barato que el "todos escriben todo" que estaba planteado en el punto 11.
+
+### Cómo encaja en el modelo que ya hay
+
+La clave es que **cada evento tenga un dueño**, y el modelo ya lo tiene medio hecho:
+
+- **Una ronda ya tiene dueño: `pagadorId`.** Quien pide la cuenta es quien la paga, así que la ronda es su evento y la escribe su móvil. Que A pachas o A medias muevan el dinero de otros no rompe el reparto: eso lo hace **la regla**, no la persona, y la regla la puede comprobar cualquiera mirando el marcador.
+- **Falta un evento nuevo: el ajuste.** "Fulano corrige su cuenta en −5 €", con su autor. Es lo que da de verdad la capacidad que se pide —arreglar *mi* número cuando la app se equivocó, sin tocar el tuyo— y **encaja en event-sourcing sin romperlo**: es un evento más en la lista, no un saldo guardado. Sin esto, "editar mi cuenta" no tiene dónde aterrizar, porque hoy el dinero no se guarda, se deriva.
+- **Unirse es reclamar un jugador.** Al escanear el QR eliges tu nombre de la lista, y ese es tu permiso de escritura. Encaja con que los ids de jugador los cree el móvil que abre la partida: uno crea, los demás se identifican.
+
+### Lo que sigue siendo difícil, y es una sola cosa
+
+**El fin de partida depende del orden global.** La derivación para en seco en la primera ronda que arruina a alguien (`derivarEstado.ts`), así que hace falta un orden total entre eventos de móviles distintos —una marca de tiempo, o un contador tipo Lamport—, no solo un orden dentro de cada registro. Es el único sitio donde los registros por jugador no se pueden mirar por separado, y es donde hay que pensar de verdad.
+
+El `Ronda.indice` de hoy no sirve para eso: se recalcula por posición del array en `sincronizar`, y esa posición deja de existir cuando la lista viene de tres móviles.
+
+### Y lo que no desaparece
+
+**Sigue haciendo falta transporte.** Acotar los permisos hace la fusión trivial, pero no mueve los bytes de un móvil a otro. Eso es el punto 11 y su decisión sin tomar:
+
+- **Con QR esto no vive:** cada edición ajena tendría que volver escaneándose, y una partida son decenas de idas y venidas.
+- **Con un relay propio sí**, y ahora el relay puede ser **tonto**: una cola de eventos por partida, sin lógica de conflictos, sin cuentas, sin persistencia más allá de la partida. Que la fusión sea trivial hace el servidor mucho más pequeño de lo que estaba planteado.
+
+O sea que esto **no** es una alternativa al punto 11: es lo que hace que la versión con servidor sea barata. Lo que se paga sigue siendo lo de allí: cero peticiones salientes, el modo avión en la parte que sincroniza, el RGPD y abrir el `connect-src` de la CSP.
+
+### Lo de "pseudo privada", ya cerrado
+
+Había que validar contra las instrucciones si la puntuación de cada uno es compartida o privada. La caja lleva **100 cartas y 20 fichas de aumento**, y ni dinero, ni monedas, ni bloc de puntuación ([2Tomatoes](https://2tomatoesgames.com/es/la-cuenta-8437027014796.html), [Gameplay Mini](https://gameplaymini.com/la-cuenta-juego-de-mesa-2-tomatoes/), [The Opinionated Gamers](https://opinionatedgamers.com/2025/11/28/dale-yu-review-of-la-cuenta/)). Si el juego no reparte dinero, tampoco define cómo se esconde: **es otro hueco del reglamento**, de la familia del recorte a cero. Y las dos reglas que sí están escritas empujan a público: la partida termina en el momento en que alguien se queda sin dinero, y gana quien más le quede con desempate por el dinero que lleves encima.
+
+Encaja con lo que se quiere aquí: el marcador se queda compartido y a la vista. **Lo acotado es quién puede tocar qué, no quién puede ver qué.**
+
+*Inferencia, no cita: el reglamento en sí no se ha podido leer —los sitios que lo alojan devuelven 403—. Con la caja delante se cierra en treinta segundos: buscar si dice* anotad *los ahorros, si menciona una hoja de puntuación, y si en algún sitio pone* en secreto*. Si aparece alguna de las tres, esto se revisa.*
+
+**Decisión pendiente:** la del punto 11, porque sin transporte esto no existe. Lo que sí se puede hacer ya, y aprovecha igual con un solo móvil, es **el evento de ajuste**: es el que da "arreglo mi cuenta sin tocar la tuya", hoy no existe, y es la pieza que esto necesita del modelo.
+
+---
+
+## 13. Ordenar el marcador por dinero
+
+**Choca con una decisión ya tomada, y hay una versión que da lo que se busca sin pagar su precio. Casi gratis.**
+
+La decisión está escrita en el código (`src/pantallas/Marcador.tsx`): *"El orden es siempre el de la mesa: nunca se reordena por dinero, que la posición baile confunde más que ayuda."* El motivo es el caso de uso: el móvil se pasa de mano en mano y cada uno **encuentra su fila por dónde está**. Con ocho filas y mala luz, una fila que se mueve entre rondas es una lectura equivocada, y aquí una lectura equivocada es una discusión sobre dinero.
+
+Lo que se gana ordenando es saber quién va ganando de un vistazo. Pero a mitad de partida esa no es la pregunta importante:
+
+**La partida termina cuando alguien se queda sin dinero.** O sea que el dato con tensión no es quién va primero, es **quién está a punto de caer**. Y ordenar de más a menos dinero deja justo a esa persona **en la última fila**, que es el sitio menos visible de la pantalla. Ordenar entierra la señal que importa.
+
+### La versión que sí, y son tres líneas
+
+Enseñar el **puesto** sin mover las filas. Y las dos piezas ya están hechas:
+
+- `clasificar` (`src/dominio/finPartida.ts`) ya devuelve `puestos` ordenado por dinero.
+- `FilaJugador` **ya acepta un `puesto`** y le pinta su medalla; hoy solo se usa en la clasificación final.
+
+Así que es mapear jugador → posición y pasarlo, dejando el orden de la mesa intacto. Se gana el ranking y no se pierde la costumbre de la fila.
+
+Lo que hay que mirar al hacerlo: el marcador es la pantalla más cargada que hay —nombre, cartas en mano, dinero— y una medalla más en cada fila puede ser ruido. Igual la medalla solo para el primero, o solo cuando hay más de una ronda jugada.
+
+**Y la señal que de verdad falta:** una marca para quien está más cerca de arruinarse. Hoy solo hay `sinAhorros`, que se enciende cuando ya ha pasado. Avisar antes es más útil que ordenar, y es lo mismo de barato.
+
+Si aun así se quiere el orden por dinero de verdad, que sea **un interruptor** y no el defecto, recordado como el tema. Pero conviene probar antes la medalla: es más barata y no rompe nada.
+
+---
+
+## 14. Enseñar el sentido de juego cuando cambia
+
+**Cabe, pero solo si es "hacia dónde vamos" y no "a quién le toca". Esas dos cosas son muy distintas de coste.**
+
+Está en la lista de fuera de alcance del README —*turnos*, junto con el estado de la mesa— así que de entrada hay que decidir si esto la abre. Mi lectura es que no, si se acota bien:
+
+| Qué | Qué cuesta |
+|---|---|
+| **A quién le toca** | Un toque **por turno**, y una ronda tiene un número indeterminado de turnos. La app no ve la mesa, así que se desincronizaría a la primera distracción y quedaría mintiendo. Esto sí es abrir "turnos", y es otra app. |
+| **Hacia dónde vamos** | Un toque **por cambio de sentido**, que pasan pocas veces. Eso es lo que se pierde de verdad: después de dos inversiones nadie se acuerda de por dónde iba. |
+
+A quién le toca ya lo sabe la mesa: se están mirando las caras. Lo que no sabe nadie es la dirección, así que **el objeto útil es una flecha y el orden de los sitios**, no un puntero de turno.
+
+Lo bueno es que la pieza que hace falta ya está: **el orden de los jugadores es el orden de la mesa**, y la app ya lo dice al crear la partida (*"El orden es el de la mesa y no cambia en toda la partida"*, en `NuevaPartida.tsx`). Así que un corro con una flecha es honesto sin pedir nada nuevo.
+
+Detalles a decidir antes de tocarlo:
+
+- **Dónde.** El sitio natural es el marcador, junto al título de la ronda. Cuidado con que no compita con *Cerrar ronda*, que es la acción primaria y se busca con el pulgar sin mirar.
+- **¿El sentido vuelve a la normalidad al cambiar de bar?** Cada ronda es un bar nuevo, así que lo razonable es que sí, pero eso es una pregunta de reglas y hay que mirarla en el reglamento, igual que la del punto 12.
+- **Dónde vive el dato.** Esto es **estado de mesa, no contabilidad**, así que no debería entrar en el registro de la `Partida`: metería por la puerta de atrás justo lo que se dejó fuera, y arrastraría migración por `esPartidaValida`. Lo coherente es que viva aparte y que **no sea historia**: si se recarga, se pierde, y no pasa nada porque la mesa lo sabe.
+- **Cuántas cartas de cambio de sentido hay y qué hacen exactamente**: no lo he podido comprobar. El catálogo de cartas está fuera de alcance a propósito y el reglamento no se ha podido leer desde aquí (403 en todos los sitios que lo alojan).
+
+---
+
 ## Sin decidir, de antes
 
 Vienen del encargo original y siguen abiertas. Están explicadas en el [README](README.md).
